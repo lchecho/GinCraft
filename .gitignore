@@ -142,3 +142,6 @@ out/
 
 # Memory dumps
 *.hprof
+
+# config
+config/config.yaml
