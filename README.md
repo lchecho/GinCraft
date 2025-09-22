@@ -504,9 +504,9 @@ make lint
 
 ## 联系方式
 
-- 项目主页：[https://github.com/yourusername/gin-craft](https://github.com/yourusername/gin-craft)
-- 问题反馈：[https://github.com/yourusername/gin-craft/issues](https://github.com/yourusername/gin-craft/issues)
-- 邮箱：your-email@example.com
+- 项目主页：[https://github.com/lchecho/gin-craft](https://github.com/lchecho/gin-craft)
+- 问题反馈：[https://github.com/lchecho/gin-craft/issues](https://github.com/lchecho/gin-craft/issues)
+- 邮箱：gin-craft@cnyy.de
 
 ---
 
