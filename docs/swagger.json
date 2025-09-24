@@ -83,7 +83,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.UserLoginRequest"
+                            "$ref": "#/definitions/user.LoginRequest"
                         }
                     }
                 ],
@@ -135,7 +135,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/user.UserRegisterRequest"
+                            "$ref": "#/definitions/user.RegisterRequest"
                         }
                     }
                 ],
@@ -179,7 +179,7 @@
                 }
             }
         },
-        "user.UserLoginRequest": {
+        "user.LoginRequest": {
             "type": "object",
             "required": [
                 "password",
@@ -208,7 +208,7 @@
                 }
             }
         },
-        "user.UserRegisterRequest": {
+        "user.RegisterRequest": {
             "type": "object",
             "required": [
                 "email",

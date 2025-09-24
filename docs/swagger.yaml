@@ -7,7 +7,7 @@ definitions:
         example: 操作成功
         type: string
     type: object
-  user.UserLoginRequest:
+  user.LoginRequest:
     properties:
       password:
         description: 密码
@@ -28,7 +28,7 @@ definitions:
         example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
     type: object
-  user.UserRegisterRequest:
+  user.RegisterRequest:
     properties:
       email:
         description: 邮箱地址
@@ -129,7 +129,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/user.UserLoginRequest'
+          $ref: '#/definitions/user.LoginRequest'
       produces:
       - application/json
       responses:
@@ -163,7 +163,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/user.UserRegisterRequest'
+          $ref: '#/definitions/user.RegisterRequest'
       produces:
       - application/json
       responses:

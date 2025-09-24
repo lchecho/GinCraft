@@ -345,11 +345,11 @@ make swagger
 // @Tags 用户管理
 // @Accept json
 // @Produce json
-// @Param request body user.UserRegisterRequest true "注册信息"
+// @Param request body user.RegisterRequest true "注册信息"
 // @Success 200 {object} common.MessageResponse "注册成功"
 // @Failure 400 {object} common.MessageResponse "请求参数错误"
 // @Router /api/v1/user/register [post]
-func (uc *UserController) Register(req *user.UserRegisterRequest) (interface{}, error) {
+func (uc *UserController) Register(req *user.RegisterRequest) (interface{}, error) {
     // 业务逻辑
 }
 ```
@@ -357,7 +357,7 @@ func (uc *UserController) Register(req *user.UserRegisterRequest) (interface{}, 
 #### 为 DTO 添加示例
 
 ```go
-type UserRegisterRequest struct {
+type RegisterRequest struct {
     Username string `json:"username" binding:"required" example:"john_doe"`
     Password string `json:"password" binding:"required" example:"123456"`
     Email    string `json:"email" binding:"required,email" example:"john@example.com"`

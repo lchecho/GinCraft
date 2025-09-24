@@ -27,13 +27,13 @@ func NewUserController() *UserController {
 // @Tags 用户管理
 // @Accept json
 // @Produce json
-// @Param request body user.UserRegisterRequest true "注册信息"
+// @Param request body user.RegisterRequest true "注册信息"
 // @Success 200 {object} common.MessageResponse "注册成功"
 // @Failure 400 {object} common.MessageResponse "请求参数错误"
 // @Failure 409 {object} common.MessageResponse "用户名或邮箱已存在"
 // @Failure 500 {object} common.MessageResponse "服务器内部错误"
 // @Router /api/v1/user/register [post]
-func (uc *UserController) Register(c *gin.Context, req *user.UserRegisterRequest) (interface{}, error) {
+func (uc *UserController) Register(c *gin.Context, req *user.RegisterRequest) (interface{}, error) {
 	// 获取应用Context
 	appCtx := middleware.MustGetContext(c)
 
@@ -72,13 +72,13 @@ func (uc *UserController) Register(c *gin.Context, req *user.UserRegisterRequest
 // @Tags 用户管理
 // @Accept json
 // @Produce json
-// @Param request body user.UserLoginRequest true "登录信息"
+// @Param request body user.LoginRequest true "登录信息"
 // @Success 200 {object} user.UserLoginResponse "登录成功"
 // @Failure 400 {object} common.MessageResponse "请求参数错误"
 // @Failure 401 {object} common.MessageResponse "用户名或密码错误"
 // @Failure 500 {object} common.MessageResponse "服务器内部错误"
 // @Router /api/v1/user/login [post]
-func (uc *UserController) Login(c *gin.Context, req *user.UserLoginRequest) (interface{}, error) {
+func (uc *UserController) Login(c *gin.Context, req *user.LoginRequest) (interface{}, error) {
 	// 获取应用Context
 	appCtx := middleware.MustGetContext(c)
 
@@ -121,7 +121,7 @@ func (uc *UserController) Login(c *gin.Context, req *user.UserLoginRequest) (int
 // @Failure 401 {object} common.MessageResponse "未授权访问"
 // @Failure 500 {object} common.MessageResponse "服务器内部错误"
 // @Router /api/v1/user/info [get]
-func (uc *UserController) Info(c *gin.Context, req *user.UserInfoRequest) (interface{}, error) {
+func (uc *UserController) Info(c *gin.Context, req *user.InfoRequest) (interface{}, error) {
 	// 获取应用Context
 	appCtx := middleware.MustGetContext(c)
 

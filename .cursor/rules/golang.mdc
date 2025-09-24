@@ -1,0 +1,88 @@
+---
+description: Cursor Rules for Go Project (Golang 开发规则)
+alwaysApply: false
+---
+# Cursor Rules for Go Project (Golang 开发规则)
+# This file guides the AI to follow specific conventions for Go development,
+# following the Model-Driven Configuration (MDC) approach.
+
+## 核心哲学 (Core Philosophy)
+
+1.  **简洁至上 (Simplicity First)**: 始终遵循 Go 的设计哲学。优先选择清晰、直接、易于理解的代码，避免不必要的抽象和过度设计。代码首先是写给人看的。
+2.  **可读性优先 (Readability over Cleverness)**: 不要编写晦涩难懂的“聪明”代码。代码的意图应该是明确的。
+3.  **遵循惯例 (Idiomatic Go)**: 生成的代码必须符合 Go 社区的通用习惯和风格。
+
+## 格式化与命名 (Formatting & Naming)
+
+1.  **强制 Gofmt**: 所有生成的 Go 代码**必须**符合 `gofmt` 的格式化标准。这是不可违背的黄金规则。
+2.  **命名规范**:
+    * **包名 (Package Names)**: 使用简短、小写、有意义的单个词作为包名。例如：`http`, `context`, `models`。不要使用下划线 (`_`) 或驼峰式 (`mixedCaps`)。
+    * **变量/函数/方法 (Variables/Functions/Methods)**:
+        * 导出成员（包外可见）使用 `PascalCase` 风格，如 `MyFunction`。
+        * 非导出成员（包内私有）使用 `camelCase` 风格，如 `myVariable`。
+    * **接口名 (Interface Names)**: 单方法接口通常以 `-er` 作为后缀，如 `Reader`, `Writer`, `Formatter`。
+    * **首字母缩写 (Acronyms)**: 像 `URL`, `HTTP`, `ID`, `API` 这样的首字母缩写词，在命名时应保持全大写，例如 `ServeHTTP`, `CustomerID`, `apiURL`。
+
+## 目录结构 (Directory Structure)
+
+为了保持项目清晰、可维护和规范化，推荐遵循社区通用的项目布局标准 ([golang-standards/project-layout](https://github.com/golang-standards/project-layout))。AI生成代码或重构时应遵循以下核心目录约定：
+
+1.  **/cmd**: 存放项目的主要可执行文件（main package）。每个子目录都应该是一个独立的可执行程序，目录名即为程序名。
+    * 例如: `/cmd/my-app/main.go`
+
+2.  **/internal**: 存放项目**私有的**应用和库代码。这里的代码只能被项目内部（`/cmd` 目录下）的代码引用。任何外部项目都无法导入 `internal` 目录下的包。**这是由 Go 编译器强制执行的规则**，能有效保护你的内部逻辑。
+
+3.  **/pkg**: 存放可以被**外部项目**安全导入的公共库代码。如果你的项目不打算作为其他项目的库来使用，可以省略此目录，将公共代码放在根目录下的包中。
+
+4.  **/api**: 存放 API 定义文件，例如 OpenAPI/Swagger JSON、Protobuf 定义文件等。
+
+5.  **/configs**: 存放配置文件模板或默认配置。
+
+6.  **/scripts**: 存放用于支持项目的脚本文件（如用于构建、安装、分析等的脚本）。
+
+## 包与接口 (Packages & Interfaces)
+
+1.  **小接口原则**: 接口应该小而专注。只包含必要的方法。`"The bigger the interface, the weaker the abstraction."` (接口越大，抽象越弱)。
+2.  **接受接口，返回结构体 (Accept Interfaces, Return Structs)**: 在函数参数中，尽量使用接口类型以增加灵活性；在函数返回值中，尽量返回具体的结构体类型。
+3.  **导入分组 (Import Grouping)**: `import` 语句应该进行分组，顺序如下：
+    1.  标准库
+    2.  第三方库
+    3.  项目内/公司内部库
+    各组之间用一个空行分隔。
+4.  **禁止循环依赖**: 包之间不允许出现循环依赖。
+
+## 错误处理 (Error Handling)
+
+1.  **绝不忽略错误**: 任何返回 `error` 的函数调用，都**必须**检查其错误返回值。不允许使用 `_` 丢弃 `error`，除非有明确且必要的理由，并附上注释说明。
+2.  **错误作为返回值**: `error` 类型必须作为函数返回值的最后一个参数。
+3.  **错误包装 (Error Wrapping)**: 当向调用栈上游传递错误时，应使用 `fmt.Errorf` 结合 `%w` 动词来包装原始错误，以保留错误上下文。
+4.  **避免 Panic**: 不要使用 `panic` 来处理常规的、可预期的错误。`panic` 应该只用于表示程序出现了不可恢复的异常状态。
+
+## 并发编程 (Concurrency)
+
+1.  **优先使用 Channel**: 遵循 Go 的并发哲学：“Do not communicate by sharing memory; instead, share memory by communicating.” 在合适的场景下，优先使用 Channel 而不是带有互斥锁的共享内存。
+2.  **使用 `context.Context`**: 对于可能阻塞、需要超时控制或可取消的操作（如网络请求、数据库查询），应将 `context.Context` 作为函数的第一个参数。
+
+## 注释与文档 (Comments & Documentation)
+
+1.  **注释**: 所有函数、方法和常量都**必须**有标准的 Godoc 注释。
+2.  **注释格式**: 注释应以被注释的成员名开头。
+3.  **解释“为什么”，而不是“是什么”**: 好的注释应该解释代码背后的意图、逻辑和原因，而不是简单地复述代码做了什么。
+4.  **更新项目README**: 修改如果涉及到功能新增或者变更，都需要更新项目的README文件。
+
+## 测试 (Testing)
+
+1.  **使用标准库 `testing`**: 单元测试和基准测试应使用 Go 的标准 `testing` 包。
+2.  **表驱动测试 (Table-Driven Tests)**: 对于需要测试多种输入和输出组合的函数，优先使用表驱动测试风格，这能让测试用例更清晰、更易于维护。
+
+## 依赖与包管理 (Dependency & Package Management)
+
+1.  **强制使用 Go Modules**: 项目**必须**使用 Go Modules 进行依赖管理。`go.mod` 文件是项目依赖的唯一真实来源。
+2.  **保持 `go.mod` 整洁**: 定期运行 `go mod tidy` 来移除未使用的依赖，并确保 `go.mod` 和 `go.sum` 文件与源代码保持同步。在提交代码前执行此命令是一个好习惯。
+3.  **依赖更新**: 谨慎更新依赖。使用 `go get -u` 或 `go get package@version` 来更新。更新后必须运行完整的测试，确保兼容性。
+4.  **关于 `vendor` 目录**: 默认情况下，不建议将依赖项提交到 `vendor` 目录。优先使用 Go module proxy。仅当项目有严格的离线构建或强可复现性要求时，才考虑使用 `go mod vendor`。
+
+## 禁止事项 (Prohibitions)
+
+1.  **禁止使用 `.` 导入**: 避免使用 `import . "package"`，因为它会污染当前包的命名空间，降低代码的可读性。
+2.  **谨慎使用 `cgo`**: 除非有明确的、不可替代的理由需要与 C 库交互，否则应避免使用 `cgo`。

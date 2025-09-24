@@ -1,0 +1,2 @@
+{"level":"error","time":"2025-08-28T11:31:40.950+0800","caller":"app/app.go:34","msg":"Failed to initialize database","error":"failed to connect to MySQL: dial tcp 127.0.0.1:3306: connect: connection refused"}
+{"level":"error","time":"2025-09-24T17:29:26.987+0800","caller":"app/app.go:34","msg":"Failed to initialize database","error":"failed to connect to MySQL: dial tcp 127.0.0.1:3306: connect: connection refused"}
