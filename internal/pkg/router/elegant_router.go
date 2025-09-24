@@ -2,11 +2,7 @@ package router
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/liuchen/gin-craft/pkg/response"
 )
-
-// HandlerFunc 统一的处理器函数类型
-type HandlerFunc func(ctx *gin.Context) (interface{}, error)
 
 // ElegantRouter 优雅的路由器，封装 gin.IRoutes
 type ElegantRouter struct {
@@ -62,48 +58,31 @@ func (r *ElegantRouter) WithMiddleware(middleware ...gin.HandlerFunc) *ElegantRo
 }
 
 // GET 处理 GET 请求
-func (r *ElegantRouter) GET(relativePath string, handlerFunc HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
-	handlers := append(middleware, r.wrapHandler(handlerFunc))
+func (r *ElegantRouter) GET(relativePath string, handlerFunc gin.HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
+	handlers := append(middleware, handlerFunc)
 	return r.routes.GET(relativePath, handlers...)
 }
 
 // POST 处理 POST 请求
-func (r *ElegantRouter) POST(relativePath string, handlerFunc HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
-	handlers := append(middleware, r.wrapHandler(handlerFunc))
+func (r *ElegantRouter) POST(relativePath string, handlerFunc gin.HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
+	handlers := append(middleware, handlerFunc)
 	return r.routes.POST(relativePath, handlers...)
 }
 
 // PUT 处理 PUT 请求
-func (r *ElegantRouter) PUT(relativePath string, handlerFunc HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
-	handlers := append(middleware, r.wrapHandler(handlerFunc))
+func (r *ElegantRouter) PUT(relativePath string, handlerFunc gin.HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
+	handlers := append(middleware, handlerFunc)
 	return r.routes.PUT(relativePath, handlers...)
 }
 
 // DELETE 处理 DELETE 请求
-func (r *ElegantRouter) DELETE(relativePath string, handlerFunc HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
-	handlers := append(middleware, r.wrapHandler(handlerFunc))
+func (r *ElegantRouter) DELETE(relativePath string, handlerFunc gin.HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
+	handlers := append(middleware, handlerFunc)
 	return r.routes.DELETE(relativePath, handlers...)
 }
 
 // PATCH 处理 PATCH 请求
-func (r *ElegantRouter) PATCH(relativePath string, handlerFunc HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
-	handlers := append(middleware, r.wrapHandler(handlerFunc))
+func (r *ElegantRouter) PATCH(relativePath string, handlerFunc gin.HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
+	handlers := append(middleware, handlerFunc)
 	return r.routes.PATCH(relativePath, handlers...)
-}
-
-// wrapHandler 通用包装处理函数
-func (r *ElegantRouter) wrapHandler(handlerFunc HandlerFunc) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		data, err := handlerFunc(c)
-		r.handleResponse(c, data, err)
-	}
-}
-
-// handleResponse 统一处理响应
-func (r *ElegantRouter) handleResponse(c *gin.Context, data interface{}, err error) {
-	if err != nil {
-		response.Error(c, err)
-		return
-	}
-	response.Success(c, data)
 }

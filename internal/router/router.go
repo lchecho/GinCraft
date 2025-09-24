@@ -22,16 +22,13 @@ func InitRouter() *gin.Engine {
 	// 创建优雅路由器
 	elegantR := elegantRouter.NewElegantRouter(r)
 
-	// 创建controller实例
-	userController := controller.NewUserController()
-
 	// 健康检查（无中间件）
-	elegantR.GET("/health", func(c *gin.Context) (interface{}, error) {
+	elegantR.GET("/health", elegantRouter.WrapHandler(func(c *gin.Context) (interface{}, error) {
 		return gin.H{"status": "ok"}, nil
-	})
+	}))
 
 	// Swagger文档路由
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	elegantR.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	// API 路由组
 	api := elegantR.Group("/api")
@@ -41,33 +38,33 @@ func InitRouter() *gin.Engine {
 		{
 			// 公开的用户路由（无中间件）
 			// 使用统一的参数解析处理器
-			r.POST("/api/v1/user/register", elegantRouter.WithRequestHandler(userController.Register))
-			r.POST("/api/v1/user/login", elegantRouter.WithRequestHandler(userController.Login))
+			// 用户路由
+			userController := controller.NewUserController()
+			v1.POST("/user/register", elegantRouter.WrapRequestHandler(userController.Register))
+			v1.POST("/user/login", elegantRouter.WrapRequestHandler(userController.Login))
 
 			// 需要认证的用户路由（使用中间件）
-			authUser := r.Group("/api/v1/user", middleware.AuthMiddleware())
+			authUser := v1.Group("/user", middleware.AuthMiddleware())
 			{
-				authUser.GET("/info", elegantRouter.WithRequestHandler(userController.Info))
+				authUser.GET("/info", elegantRouter.WrapRequestHandler(userController.Info))
 				// 可以为单个路由添加额外中间件
-				authUser.GET("/profile", elegantRouter.WithRequestHandler(userController.Info), middleware.RateLimitMiddleware())
+				authUser.GET("/profile", elegantRouter.WrapRequestHandler(userController.Info), middleware.RateLimitMiddleware())
 			}
 
 			// 管理员路由（多个中间件）
-			admin := v1.Group("/admin",
-				middleware.AuthMiddleware(),
-				middleware.AdminAuthMiddleware())
+			admin := v1.Group("/admin", middleware.AuthMiddleware(), middleware.AdminAuthMiddleware())
 			{
-				admin.GET("/users", func(c *gin.Context) (interface{}, error) {
+				admin.GET("/users", elegantRouter.WrapHandler(func(c *gin.Context) (interface{}, error) {
 					return gin.H{"message": "管理员用户列表"}, nil
-				})
+				}))
 			}
 
 			// API路由（使用API密钥认证）
 			apiRoutes := v1.Group("/api", middleware.ValidateAPIKeyMiddleware())
 			{
-				apiRoutes.GET("/data", func(c *gin.Context) (interface{}, error) {
+				apiRoutes.GET("/data", elegantRouter.WrapHandler(func(c *gin.Context) (interface{}, error) {
 					return gin.H{"data": "API数据"}, nil
-				})
+				}))
 			}
 		}
 	}

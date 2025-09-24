@@ -50,8 +50,8 @@ func ParseRequest[T any](c *gin.Context) (*T, error) {
 	return &req, nil
 }
 
-// WithRequestHandler 包装带参数的处理函数
-func WithRequestHandler[T any](handlerFunc func(*gin.Context, *T) (interface{}, error)) gin.HandlerFunc {
+// WrapRequestHandler 包装带参数的处理函数
+func WrapRequestHandler[T any](handlerFunc func(*gin.Context, *T) (interface{}, error)) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 解析请求参数
 		req, err := ParseRequest[T](c)
@@ -59,15 +59,25 @@ func WithRequestHandler[T any](handlerFunc func(*gin.Context, *T) (interface{}, 
 			response.Error(c, err)
 			return
 		}
-
 		// 执行业务逻辑
 		data, err := handlerFunc(c, req)
-		if err != nil {
-			response.Error(c, err)
-			return
-		}
-
-		// 返回成功响应
-		response.Success(c, data)
+		handleResponse(c, data, err)
 	}
+}
+
+// WrapHandler 通用包装处理函数
+func WrapHandler(handlerFunc func(ctx *gin.Context) (interface{}, error)) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		data, err := handlerFunc(c)
+		handleResponse(c, data, err)
+	}
+}
+
+// handleResponse 统一处理响应
+func handleResponse(c *gin.Context, data interface{}, err error) {
+	if err != nil {
+		response.Error(c, err)
+		return
+	}
+	response.Success(c, data)
 }
