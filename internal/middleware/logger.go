@@ -37,13 +37,10 @@ func Logger() gin.HandlerFunc {
 		// User-Agent
 		userAgent := c.Request.UserAgent()
 
-		// 使用应用 Context 的 TraceID，统一链路
-		traceID := appCtx.GetTraceID()
-		c.Header("X-Request-ID", traceID)
-
-		// 获取请求体
+		// 获取请求体（排除文件上传）
 		var requestBody []byte
-		if c.Request.Body != nil && shouldLogRequestBody(c.Request.Header.Get("Content-Type")) {
+		contentType := c.Request.Header.Get("Content-Type")
+		if c.Request.Body != nil && shouldLogRequestBody(contentType) {
 			requestBody, _ = io.ReadAll(c.Request.Body)
 			c.Request.Body = io.NopCloser(bytes.NewBuffer(requestBody))
 		}
@@ -56,6 +53,9 @@ func Logger() gin.HandlerFunc {
 		// 添加请求体（如果需要记录）
 		if len(requestBody) > 0 {
 			appCtx.AddLogField("request_body", string(requestBody))
+		} else if isFileUpload(contentType) {
+			// 文件上传请求，只记录类型不记录内容
+			appCtx.AddLogField("request_type", "file_upload")
 		}
 
 		// 包装ResponseWriter以捕获响应体
@@ -105,10 +105,14 @@ func shouldLogRequestBody(contentType string) bool {
 		return false
 	}
 
-	// 只记录JSON和表单数据
+	// 只记录JSON和普通表单数据，不记录文件上传
 	return strings.Contains(contentType, "application/json") ||
-		strings.Contains(contentType, "application/x-www-form-urlencoded") ||
-		strings.Contains(contentType, "multipart/form-data")
+		strings.Contains(contentType, "application/x-www-form-urlencoded")
+}
+
+// isFileUpload 判断是否为文件上传请求
+func isFileUpload(contentType string) bool {
+	return strings.Contains(contentType, "multipart/form-data")
 }
 
 // shouldLogResponseBody 判断是否应该记录响应体

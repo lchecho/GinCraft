@@ -28,6 +28,9 @@ func ContextMiddleware() gin.HandlerFunc {
 		// 设置日志记录器
 		appCtx.SetLogger(logger.Log)
 
+		// 记录trace_id
+		c.Set(logger.TraceIDKey, appCtx.GetTraceID())
+
 		// 将应用Context存储到gin.Context中
 		c.Set(ContextKey, appCtx)
 

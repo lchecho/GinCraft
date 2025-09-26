@@ -17,13 +17,15 @@ type GormLogger struct {
 	SlowThreshold         time.Duration
 	SourceField           string
 	SkipErrRecordNotFound bool
+	logger                logger.Logger // 使用模块化logger
 }
 
 // NewGormLogger 创建gorm日志实例
 func NewGormLogger() *GormLogger {
 	return &GormLogger{
-		SlowThreshold:         time.Second, // 慢查询阈值
-		SkipErrRecordNotFound: true,        // 是否跳过记录未找到错误
+		SlowThreshold:         time.Second,                // 慢查询阈值
+		SkipErrRecordNotFound: true,                       // 是否跳过记录未找到错误
+		logger:                logger.GetDatabaseLogger(), // 使用数据库模块logger
 	}
 }
 
@@ -34,17 +36,17 @@ func (l *GormLogger) LogMode(level gormlogger.LogLevel) gormlogger.Interface {
 
 // Info 打印信息
 func (l *GormLogger) Info(ctx context.Context, msg string, data ...interface{}) {
-	logger.Info(fmt.Sprintf(msg, data...))
+	l.logger.Info(fmt.Sprintf(msg, data...))
 }
 
 // Warn 打印警告
 func (l *GormLogger) Warn(ctx context.Context, msg string, data ...interface{}) {
-	logger.Warn(fmt.Sprintf(msg, data...))
+	l.logger.Warn(fmt.Sprintf(msg, data...))
 }
 
 // Error 打印错误
 func (l *GormLogger) Error(ctx context.Context, msg string, data ...interface{}) {
-	logger.Error(fmt.Sprintf(msg, data...))
+	l.logger.Error(fmt.Sprintf(msg, data...))
 }
 
 // Trace 记录SQL执行
@@ -73,17 +75,17 @@ func (l *GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (stri
 
 	// 记录慢查询
 	if elapsed > l.SlowThreshold {
-		logger.Warn("SLOW SQL", fields...)
+		l.logger.Warn("SLOW SQL", fields...)
 		return
 	}
 
 	// 记录错误
 	if err != nil && (!errors.Is(err, gorm.ErrRecordNotFound) || !l.SkipErrRecordNotFound) {
 		fields = append(fields, zap.Error(err))
-		logger.Error("SQL Error", fields...)
+		l.logger.Error("SQL Error", fields...)
 		return
 	}
 
 	// 记录正常查询
-	logger.Debug("SQL", fields...)
+	l.logger.Debug("SQL", fields...)
 }
