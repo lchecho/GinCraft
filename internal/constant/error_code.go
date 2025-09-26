@@ -3,66 +3,66 @@ package constant
 // 错误码定义
 const (
 	// 成功
-	SUCCESS = 0
+	Success = 0
 
 	// 系统级错误码
-	SYSTEM_ERROR      = 10001
-	PARAM_ERROR       = 10002
-	DB_ERROR          = 10003
-	UNAUTHORIZED      = 10004
-	FORBIDDEN         = 10005
-	NOT_FOUND         = 10006
-	METHOD_NOT_ALLOW  = 10007
-	TOO_MANY_REQUESTS = 10008
-	TIMEOUT           = 10009
+	SystemError     = 10001
+	ParamError      = 10002
+	DBError         = 10003
+	Unauthorized    = 10004
+	Forbidden       = 10005
+	NotFound        = 10006
+	MethodNotAllow  = 10007
+	TooManyRequests = 10008
+	Timeout         = 10009
 
 	// 业务级错误码 (2xxxx)
 	// 用户相关错误码 (200xx)
-	USER_NOT_EXIST         = 20001
-	PASSWORD_ERROR         = 20002
-	TOKEN_EXPIRED          = 20003
-	TOKEN_INVALID          = 20004
-	USER_ALREADY_EXIST     = 20005
-	USERNAME_ALREADY_EXIST = 20006
-	EMAIL_ALREADY_EXIST    = 20007
-	USER_CREATE_FAILED     = 20008
-	USER_UPDATE_FAILED     = 20009
-	USER_DELETE_FAILED     = 20010
+	UserNotExist         = 20001
+	PasswordError        = 20002
+	TokenExpired         = 20003
+	TokenInvalid         = 20004
+	UserAlreadyExist     = 20005
+	UsernameAlreadyExist = 20006
+	EmailAlreadyExist    = 20007
+	UserCreateFailed     = 20008
+	UserUpdateFailed     = 20009
+	UserDeleteFailed     = 20010
 
 	// 数据库连接错误码 (202xx)
-	DB_CONNECTION_FAILED  = 20201
-	DB_TRANSACTION_FAILED = 20202
+	DBConnectionFailed  = 20201
+	DBTransactionFailed = 20202
 )
 
 // ErrorMsg 错误码对应的错误信息
 var ErrorMsg = map[int]string{
-	SUCCESS: "成功",
+	Success: "成功",
 
-	SYSTEM_ERROR:      "系统错误",
-	PARAM_ERROR:       "参数错误",
-	DB_ERROR:          "数据库错误",
-	UNAUTHORIZED:      "未授权",
-	FORBIDDEN:         "禁止访问",
-	NOT_FOUND:         "资源不存在",
-	METHOD_NOT_ALLOW:  "方法不允许",
-	TOO_MANY_REQUESTS: "请求过多",
-	TIMEOUT:           "请求超时",
+	SystemError:     "系统错误",
+	ParamError:      "参数错误",
+	DBError:         "数据库错误",
+	Unauthorized:    "未授权",
+	Forbidden:       "禁止访问",
+	NotFound:        "资源不存在",
+	MethodNotAllow:  "方法不允许",
+	TooManyRequests: "请求过多",
+	Timeout:         "请求超时",
 
 	// 用户相关错误信息
-	USER_NOT_EXIST:         "用户不存在",
-	PASSWORD_ERROR:         "密码错误",
-	TOKEN_EXPIRED:          "令牌已过期",
-	TOKEN_INVALID:          "无效的令牌",
-	USER_ALREADY_EXIST:     "用户已存在",
-	USERNAME_ALREADY_EXIST: "用户名已存在",
-	EMAIL_ALREADY_EXIST:    "邮箱已存在",
-	USER_CREATE_FAILED:     "用户创建失败",
-	USER_UPDATE_FAILED:     "用户更新失败",
-	USER_DELETE_FAILED:     "用户删除失败",
+	UserNotExist:         "用户不存在",
+	PasswordError:        "密码错误",
+	TokenExpired:         "令牌已过期",
+	TokenInvalid:         "无效的令牌",
+	UserAlreadyExist:     "用户已存在",
+	UsernameAlreadyExist: "用户名已存在",
+	EmailAlreadyExist:    "邮箱已存在",
+	UserCreateFailed:     "用户创建失败",
+	UserUpdateFailed:     "用户更新失败",
+	UserDeleteFailed:     "用户删除失败",
 
 	// 数据库连接错误信息
-	DB_CONNECTION_FAILED:  "数据库连接失败",
-	DB_TRANSACTION_FAILED: "数据库事务失败",
+	DBConnectionFailed:  "数据库连接失败",
+	DBTransactionFailed: "数据库事务失败",
 }
 
 // GetMsg 获取错误信息
@@ -71,5 +71,5 @@ func GetMsg(code int) string {
 	if ok {
 		return msg
 	}
-	return ErrorMsg[SYSTEM_ERROR]
+	return ErrorMsg[SystemError]
 }

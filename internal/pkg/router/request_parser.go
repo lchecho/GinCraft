@@ -44,7 +44,7 @@ func ParseRequest[T any](c *gin.Context) (*T, error) {
 
 	// 参数绑定失败
 	if err != nil {
-		return nil, errors.New(constant.PARAM_ERROR, err.Error())
+		return nil, errors.New(constant.ParamError, err.Error())
 	}
 
 	return &req, nil

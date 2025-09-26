@@ -122,7 +122,7 @@ func (uc *UserController) Info(c *gin.Context, req *user.InfoRequest) (interface
 	token := c.GetHeader("Authorization")
 	if token == "" {
 		appCtx.LogWarn("未提供Authorization头")
-		return nil, errors.New(constant.UNAUTHORIZED)
+		return nil, errors.New(constant.Unauthorized)
 	}
 
 	// 设置自定义字段

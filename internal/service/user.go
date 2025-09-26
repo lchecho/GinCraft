@@ -26,7 +26,7 @@ func (s *userService) Register(username, password, email string) error {
 		return err
 	}
 	if usernameExists {
-		return errors.New(constant.USERNAME_ALREADY_EXIST)
+		return errors.New(constant.UsernameAlreadyExist)
 	}
 
 	// 检查邮箱是否已存在
@@ -35,7 +35,7 @@ func (s *userService) Register(username, password, email string) error {
 		return err
 	}
 	if emailExists {
-		return errors.New(constant.EMAIL_ALREADY_EXIST)
+		return errors.New(constant.EmailAlreadyExist)
 	}
 
 	// 创建用户
@@ -57,7 +57,7 @@ func (s *userService) Login(username, password string) (string, error) {
 
 	// 实际应用中应该验证密码
 	if user.Password != password {
-		return "", errors.New(constant.PASSWORD_ERROR)
+		return "", errors.New(constant.PasswordError)
 	}
 
 	// 生成 token

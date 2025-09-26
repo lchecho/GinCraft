@@ -316,10 +316,10 @@ response.Success(c, gin.H{
 })
 
 // 失败响应
-response.Fail(c, constant.PARAM_ERROR, nil)
+response.Fail(c, constant.ParamError, nil)
 
 // 自定义消息的失败响应
-response.FailWithMsg(c, constant.SYSTEM_ERROR, "系统发生错误", nil)
+response.FailWithMsg(c, constant.SystemError, "系统发生错误", nil)
 ```
 
 ### 使用 Swagger 文档

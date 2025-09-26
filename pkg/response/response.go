@@ -19,8 +19,8 @@ type Response struct {
 // Success 成功响应
 func Success(c *gin.Context, data interface{}) {
 	c.JSON(http.StatusOK, Response{
-		Code: constant.SUCCESS,
-		Msg:  constant.GetMsg(constant.SUCCESS),
+		Code: constant.Success,
+		Msg:  constant.GetMsg(constant.Success),
 		Data: data,
 	})
 }
@@ -69,8 +69,8 @@ func Error(c *gin.Context, err error) {
 	} else {
 		// 处理普通错误
 		c.JSON(http.StatusOK, Response{
-			Code:   constant.SYSTEM_ERROR,
-			Msg:    constant.GetMsg(constant.SYSTEM_ERROR),
+			Code:   constant.SystemError,
+			Msg:    constant.GetMsg(constant.SystemError),
 			Data:   nil,
 			Detail: err.Error(),
 		})
@@ -79,30 +79,30 @@ func Error(c *gin.Context, err error) {
 
 // ParamError 参数错误响应
 func ParamError(c *gin.Context) {
-	Fail(c, constant.PARAM_ERROR, nil)
+	Fail(c, constant.ParamError, nil)
 }
 
 // ServerError 服务器错误响应
 func ServerError(c *gin.Context) {
-	Fail(c, constant.SYSTEM_ERROR, nil)
+	Fail(c, constant.SystemError, nil)
 }
 
 // Unauthorized 未授权响应
 func Unauthorized(c *gin.Context) {
-	Fail(c, constant.UNAUTHORIZED, nil)
+	Fail(c, constant.Unauthorized, nil)
 }
 
 // Forbidden 禁止访问响应
 func Forbidden(c *gin.Context) {
-	Fail(c, constant.FORBIDDEN, nil)
+	Fail(c, constant.Forbidden, nil)
 }
 
 // NotFound 资源不存在响应
 func NotFound(c *gin.Context) {
-	Fail(c, constant.NOT_FOUND, nil)
+	Fail(c, constant.NotFound, nil)
 }
 
 // TooManyRequests 请求过多响应
 func TooManyRequests(c *gin.Context) {
-	Fail(c, constant.TOO_MANY_REQUESTS, nil)
+	Fail(c, constant.TooManyRequests, nil)
 }
