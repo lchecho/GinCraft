@@ -8,9 +8,6 @@ import (
 	"github.com/liuchen/gin-craft/pkg/logger"
 )
 
-// ContextKey 用于在gin.Context中存储自定义Context的键
-const ContextKey = "custom_context"
-
 // ContextMiddleware 自定义Context中间件
 func ContextMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -32,7 +29,7 @@ func ContextMiddleware() gin.HandlerFunc {
 		c.Set(logger.TraceIDKey, appCtx.GetTraceID())
 
 		// 将应用Context存储到gin.Context中
-		c.Set(ContextKey, appCtx)
+		c.Set(pkgCtx.ContextKey, appCtx)
 
 		// 在响应头中添加追踪ID
 		c.Header("X-Trace-ID", appCtx.GetTraceID())
@@ -47,7 +44,7 @@ func ContextMiddleware() gin.HandlerFunc {
 
 // GetContext 从gin.Context中获取应用Context
 func GetContext(c context.Context) *pkgCtx.Context {
-	value := c.Value(ContextKey)
+	value := c.Value(pkgCtx.ContextKey)
 	if appCtx, ok := value.(*pkgCtx.Context); ok {
 		return appCtx
 	}
