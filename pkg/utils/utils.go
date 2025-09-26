@@ -3,7 +3,10 @@ package utils
 import (
 	"crypto/md5"
 	"encoding/hex"
+	"fmt"
 	"math/rand"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -43,4 +46,26 @@ func GetCurrentTimestamp() int64 {
 // GetCurrentTime 获取当前时间字符串
 func GetCurrentTime() string {
 	return FormatTime(time.Now())
+}
+
+func GetRoot() (string, error) {
+	dir, err := os.Getwd()
+	if err != nil {
+		return "", err
+	}
+
+	for {
+		if _, err = os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir, nil
+		}
+		if _, err = os.Stat(filepath.Join(dir, "config", "config.yaml")); err == nil {
+			return dir, nil
+		}
+
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", fmt.Errorf("未找到 go.mod 文件")
+		}
+		dir = parent
+	}
 }

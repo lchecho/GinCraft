@@ -17,8 +17,3 @@ type ListResponse struct {
 type IDResponse struct {
 	ID interface{} `json:"id" example:"1"` // ID，可以是int、uint、string等
 }
-
-// MessageResponse 通用消息响应参数
-type MessageResponse struct {
-	Message string `json:"message" example:"操作成功"` // 响应消息
-}

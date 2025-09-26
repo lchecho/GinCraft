@@ -5,11 +5,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/liuchen/gin-craft/internal/constant"
-	"github.com/liuchen/gin-craft/internal/dto/common"
 	"github.com/liuchen/gin-craft/internal/dto/user"
 	"github.com/liuchen/gin-craft/internal/middleware"
 	"github.com/liuchen/gin-craft/internal/service"
 	"github.com/liuchen/gin-craft/pkg/errors"
+	_ "github.com/liuchen/gin-craft/pkg/response"
 	"go.uber.org/zap"
 )
 
@@ -28,10 +28,7 @@ func NewUserController() *UserController {
 // @Accept json
 // @Produce json
 // @Param request body user.RegisterRequest true "注册信息"
-// @Success 200 {object} common.MessageResponse "注册成功"
-// @Failure 400 {object} common.MessageResponse "请求参数错误"
-// @Failure 409 {object} common.MessageResponse "用户名或邮箱已存在"
-// @Failure 500 {object} common.MessageResponse "服务器内部错误"
+// @Success 200 {object} response.Response "注册成功"
 // @Router /api/v1/user/register [post]
 func (uc *UserController) Register(c *gin.Context, req *user.RegisterRequest) (interface{}, error) {
 	// 获取应用Context
@@ -61,9 +58,7 @@ func (uc *UserController) Register(c *gin.Context, req *user.RegisterRequest) (i
 		zap.Duration("duration", appCtx.GetDuration()),
 	)
 
-	return common.MessageResponse{
-		Message: "注册成功",
-	}, nil
+	return nil, nil
 }
 
 // Login 用户登录
@@ -73,10 +68,7 @@ func (uc *UserController) Register(c *gin.Context, req *user.RegisterRequest) (i
 // @Accept json
 // @Produce json
 // @Param request body user.LoginRequest true "登录信息"
-// @Success 200 {object} user.UserLoginResponse "登录成功"
-// @Failure 400 {object} common.MessageResponse "请求参数错误"
-// @Failure 401 {object} common.MessageResponse "用户名或密码错误"
-// @Failure 500 {object} common.MessageResponse "服务器内部错误"
+// @Success 200 {object} user.LoginResponse "登录成功"
 // @Router /api/v1/user/login [post]
 func (uc *UserController) Login(c *gin.Context, req *user.LoginRequest) (interface{}, error) {
 	// 获取应用Context
@@ -105,7 +97,7 @@ func (uc *UserController) Login(c *gin.Context, req *user.LoginRequest) (interfa
 		zap.Duration("duration", appCtx.GetDuration()),
 	)
 
-	return user.UserLoginResponse{
+	return user.LoginResponse{
 		Token: token,
 	}, nil
 }
@@ -117,9 +109,7 @@ func (uc *UserController) Login(c *gin.Context, req *user.LoginRequest) (interfa
 // @Accept json
 // @Produce json
 // @Param Authorization header string true "访问令牌" default(Bearer {token})
-// @Success 200 {object} user.UserResponse "获取成功"
-// @Failure 401 {object} common.MessageResponse "未授权访问"
-// @Failure 500 {object} common.MessageResponse "服务器内部错误"
+// @Success 200 {object} user.User "获取成功"
 // @Router /api/v1/user/info [get]
 func (uc *UserController) Info(c *gin.Context, req *user.InfoRequest) (interface{}, error) {
 	// 获取应用Context
@@ -163,7 +153,7 @@ func (uc *UserController) Info(c *gin.Context, req *user.InfoRequest) (interface
 		zap.Duration("duration", appCtx.GetDuration()),
 	)
 
-	return user.UserResponse{
+	return user.User{
 		ID:        userInfo.ID,
 		Username:  userInfo.Username,
 		Email:     userInfo.Email,
