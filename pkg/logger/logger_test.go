@@ -119,7 +119,7 @@ func TestPredefinedModuleLoggers(t *testing.T) {
 	// 测试预定义的模块logger
 	tests := []struct {
 		name   string
-		getter func() Logger
+		getter func() *zap.Logger
 	}{
 		{"database", GetDatabaseLogger},
 		{"api", GetAPILogger},
@@ -162,9 +162,6 @@ func TestModuleLoggerInterface(t *testing.T) {
 	// 获取模块logger
 	logger := GetModuleLogger("test")
 
-	// 验证实现了Logger接口
-	var _ Logger = logger
-
 	// 测试所有接口方法
 	logger.Debug("Debug message", zap.String("key", "value"))
 	logger.Info("Info message", zap.String("key", "value"))
@@ -173,7 +170,6 @@ func TestModuleLoggerInterface(t *testing.T) {
 
 	// 测试With方法返回的也是Logger接口
 	contextLogger := logger.With(zap.String("context", "test"))
-	var _ Logger = contextLogger
 	contextLogger.Info("Context message")
 
 	// 清理
@@ -224,7 +220,7 @@ func TestConcurrentModuleLoggerAccess(t *testing.T) {
 	require.NoError(t, err)
 
 	// 并发获取同一个模块logger
-	done := make(chan Logger, 10)
+	done := make(chan *zap.Logger, 10)
 	moduleName := "concurrent_test"
 
 	for i := 0; i < 10; i++ {
@@ -236,7 +232,7 @@ func TestConcurrentModuleLoggerAccess(t *testing.T) {
 	}
 
 	// 收集所有logger实例
-	loggers := make([]Logger, 10)
+	loggers := make([]*zap.Logger, 10)
 	for i := 0; i < 10; i++ {
 		loggers[i] = <-done
 	}

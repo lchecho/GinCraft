@@ -2,10 +2,10 @@ package context
 
 import (
 	"context"
+	"github.com/liuchen/gin-craft/pkg/logger"
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"go.uber.org/zap"
 )
 
@@ -57,7 +57,7 @@ func New(ctx context.Context) *Context {
 	return &Context{
 		ctx:          ctx,
 		cancel:       cancel,
-		TraceID:      uuid.New().String(),
+		TraceID:      logger.WithTraceID(),
 		StartTime:    time.Now(),
 		CustomFields: make(map[string]interface{}),
 		logFields:    make([]zap.Field, 0),
@@ -76,7 +76,7 @@ func NewWithTimeout(ctx context.Context, timeout time.Duration) *Context {
 	return &Context{
 		ctx:          ctx,
 		cancel:       cancel,
-		TraceID:      uuid.New().String(),
+		TraceID:      logger.WithTraceID(),
 		StartTime:    time.Now(),
 		CustomFields: make(map[string]interface{}),
 		logFields:    make([]zap.Field, 0),
@@ -95,7 +95,7 @@ func NewWithDeadline(ctx context.Context, deadline time.Time) *Context {
 	return &Context{
 		ctx:          ctx,
 		cancel:       cancel,
-		TraceID:      uuid.New().String(),
+		TraceID:      logger.WithTraceID(),
 		StartTime:    time.Now(),
 		CustomFields: make(map[string]interface{}),
 		logFields:    make([]zap.Field, 0),

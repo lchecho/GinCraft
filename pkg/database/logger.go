@@ -17,7 +17,7 @@ type GormLogger struct {
 	SlowThreshold         time.Duration
 	SourceField           string
 	SkipErrRecordNotFound bool
-	logger                logger.Logger // 使用模块化logger
+	logger                *zap.Logger // 使用模块化logger
 }
 
 // NewGormLogger 创建gorm日志实例

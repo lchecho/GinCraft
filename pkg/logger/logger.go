@@ -19,7 +19,7 @@ var (
 	TraceIDKey = "trace_id"
 
 	// 模块化日志管理器
-	moduleLoggers = make(map[string]*ModuleLogger)
+	moduleLoggers = make(map[string]*zap.Logger)
 	loggerMutex   sync.RWMutex
 
 	// 全局配置
@@ -34,22 +34,6 @@ type LogConfig struct {
 	MaxBackups int
 	MaxAge     int
 	Compress   bool
-}
-
-// ModuleLogger 模块日志记录器
-type ModuleLogger struct {
-	name   string
-	logger *zap.Logger
-}
-
-// Logger 日志接口
-type Logger interface {
-	Debug(msg string, fields ...zap.Field)
-	Info(msg string, fields ...zap.Field)
-	Warn(msg string, fields ...zap.Field)
-	Error(msg string, fields ...zap.Field)
-	Fatal(msg string, fields ...zap.Field)
-	With(fields ...zap.Field) Logger
 }
 
 // InitLogger 初始化日志
@@ -190,7 +174,7 @@ func Fatal(msg string, fields ...zap.Field) {
 }
 
 // GetModuleLogger 获取或创建模块日志记录器
-func GetModuleLogger(moduleName string) Logger {
+func GetModuleLogger(moduleName string) *zap.Logger {
 	loggerMutex.RLock()
 	if logger, exists := moduleLoggers[moduleName]; exists {
 		loggerMutex.RUnlock()
@@ -221,78 +205,30 @@ func GetModuleLogger(moduleName string) Logger {
 	)
 	if err != nil {
 		// 如果创建失败，返回默认logger
-		return &moduleLoggerWrapper{Log}
+		return Log
 	}
 
-	moduleLogger := &ModuleLogger{
-		name:   moduleName,
-		logger: zapLogger,
-	}
-
-	moduleLoggers[moduleName] = moduleLogger
-	return moduleLogger
+	moduleLoggers[moduleName] = zapLogger
+	return zapLogger
 }
 
-// moduleLoggerWrapper 包装默认logger以实现Logger接口
-type moduleLoggerWrapper struct {
-	*zap.Logger
-}
-
-func (w *moduleLoggerWrapper) With(fields ...zap.Field) Logger {
-	return &moduleLoggerWrapper{w.Logger.With(fields...)}
-}
-
-// ModuleLogger实现Logger接口
-func (m *ModuleLogger) Debug(msg string, fields ...zap.Field) {
-	m.logger.Debug(msg, fields...)
-}
-
-func (m *ModuleLogger) Info(msg string, fields ...zap.Field) {
-	m.logger.Info(msg, fields...)
-}
-
-func (m *ModuleLogger) Warn(msg string, fields ...zap.Field) {
-	m.logger.Warn(msg, fields...)
-}
-
-func (m *ModuleLogger) Error(msg string, fields ...zap.Field) {
-	m.logger.Error(msg, fields...)
-}
-
-func (m *ModuleLogger) Fatal(msg string, fields ...zap.Field) {
-	m.logger.Fatal(msg, fields...)
-}
-
-func (m *ModuleLogger) With(fields ...zap.Field) Logger {
-	return &ModuleLogger{
-		name:   m.name,
-		logger: m.logger.With(fields...),
-	}
-}
-
-// GetModuleName 获取模块名
-func (m *ModuleLogger) GetModuleName() string {
-	return m.name
-}
-
-// 预定义的模块logger获取函数
-func GetDatabaseLogger() Logger {
+func GetDatabaseLogger() *zap.Logger {
 	return GetModuleLogger("database")
 }
 
-func GetAPILogger() Logger {
+func GetAPILogger() *zap.Logger {
 	return GetModuleLogger("api")
 }
 
-func GetCacheLogger() Logger {
+func GetCacheLogger() *zap.Logger {
 	return GetModuleLogger("cache")
 }
 
-func GetCronLogger() Logger {
+func GetCronLogger() *zap.Logger {
 	return GetModuleLogger("cron")
 }
 
-func GetNotificationLogger() Logger {
+func GetNotificationLogger() *zap.Logger {
 	return GetModuleLogger("notification")
 }
 
@@ -303,7 +239,7 @@ func Close() {
 
 	// 关闭所有模块logger
 	for _, moduleLogger := range moduleLoggers {
-		_ = moduleLogger.logger.Sync()
+		_ = moduleLogger.Sync()
 	}
 
 	// 关闭全局logger

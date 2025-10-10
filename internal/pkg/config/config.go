@@ -57,6 +57,9 @@ type AppConfig struct {
 			SamplerParam      float64 `mapstructure:"sampler_param"`
 		} `mapstructure:"jaeger"`
 	} `mapstructure:"trace"`
+
+	Client struct {
+	} `mapstructure:"client"`
 }
 
 // LoadConfig 加载配置
