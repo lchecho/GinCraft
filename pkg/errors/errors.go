@@ -1,6 +1,7 @@
 package errors
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/liuchen/gin-craft/internal/constant"
@@ -61,12 +62,14 @@ func Newf(code int, format string, args ...interface{}) *AppError {
 
 // IsAppError 判断是否为应用错误
 func IsAppError(err error) bool {
-	_, ok := err.(*AppError)
+	var appError *AppError
+	ok := errors.As(err, &appError)
 	return ok
 }
 
 // GetAppError 获取应用错误
 func GetAppError(err error) (*AppError, bool) {
-	appErr, ok := err.(*AppError)
+	var appErr *AppError
+	ok := errors.As(err, &appErr)
 	return appErr, ok
 }

@@ -13,7 +13,7 @@ type Response struct {
 	Code   int         `json:"code"`
 	Msg    string      `json:"msg"`
 	Data   interface{} `json:"data"`
-	Detail string      `json:"detail,omitempty"`
+	Detail interface{} `json:"detail,omitempty"`
 }
 
 // Success 成功响应
@@ -65,6 +65,7 @@ func Error(c *gin.Context, err error) {
 		if detail := appErr.GetDetail(); detail != "" {
 			resp.Detail = detail
 		}
+
 		c.JSON(http.StatusOK, resp)
 	} else {
 		// 处理普通错误
