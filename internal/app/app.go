@@ -6,6 +6,7 @@ import (
 	"github.com/liuchen/gin-craft/internal/pkg/config"
 	"github.com/liuchen/gin-craft/internal/pkg/cron"
 	"github.com/liuchen/gin-craft/internal/pkg/database"
+	"github.com/liuchen/gin-craft/internal/pkg/redis"
 	"github.com/liuchen/gin-craft/pkg/logger"
 	"go.uber.org/zap"
 )
@@ -35,6 +36,12 @@ func Init(configPath string) error {
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
+	// 初始化Redis
+	if err := redis.InitRedis(); err != nil {
+		logger.Error("Failed to initialize Redis", zap.Error(err))
+		return fmt.Errorf("failed to initialize Redis: %w", err)
+	}
+
 	// 初始化定时任务
 	cron.InitCron()
 
@@ -46,6 +53,9 @@ func Init(configPath string) error {
 func Close() {
 	// 关闭数据库连接
 	database.Close()
+
+	// 关闭Redis连接
+	redis.Close()
 
 	// 停止定时任务
 	cron.Stop()
