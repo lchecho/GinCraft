@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	jsoniter "github.com/json-iterator/go"
 	"sync"
@@ -213,11 +214,15 @@ func (r *Client) SetJSON(ctx context.Context, key string, value interface{}, exp
 // GetJSON 从Redis获取JSON数据
 func (r *Client) GetJSON(ctx context.Context, key string, dest interface{}) error {
 	data, err := r.client.Get(ctx, key).Result()
-	if err != nil {
+	if err != nil && !errors.Is(err, redis.Nil) {
 		return fmt.Errorf("failed to get from Redis: %w", err)
 	}
 
-	if err := jsoniter.Unmarshal([]byte(data), dest); err != nil {
+	if data == "" {
+		return nil
+	}
+
+	if err = jsoniter.Unmarshal([]byte(data), dest); err != nil {
 		return fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
 
