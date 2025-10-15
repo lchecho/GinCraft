@@ -29,7 +29,7 @@ func ContextMiddleware() gin.HandlerFunc {
 		c.Set(logger.TraceIDKey, appCtx.GetTraceID())
 
 		// 将应用Context存储到gin.Context中
-		c.Set(pkgCtx.ContextKey, appCtx)
+		c.Set(pkgCtx.CtxKey, appCtx)
 
 		// 在响应头中添加追踪ID
 		c.Header("X-Trace-ID", appCtx.GetTraceID())
@@ -44,7 +44,7 @@ func ContextMiddleware() gin.HandlerFunc {
 
 // GetContext 从gin.Context中获取应用Context
 func GetContext(c context.Context) *pkgCtx.Context {
-	value := c.Value(pkgCtx.ContextKey)
+	value := c.Value(pkgCtx.CtxKey)
 	if appCtx, ok := value.(*pkgCtx.Context); ok {
 		return appCtx
 	}

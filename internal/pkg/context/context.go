@@ -9,8 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// ContextKey 用于在gin.Context中存储自定义Context的键
-const ContextKey = "custom_context"
+// CtxKey 用于在gin.Context中存储自定义Context的键
+const CtxKey = "custom_context"
 
 // Context 自定义上下文结构体，用于追踪请求或任务的上下文信息
 type Context struct {
