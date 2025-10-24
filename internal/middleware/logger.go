@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/liuchen/gin-craft/internal/pkg/context"
 )
 
 // responseWriter 包装gin.ResponseWriter以捕获响应体
@@ -23,7 +24,7 @@ func (w *responseWriter) Write(b []byte) (int, error) {
 func Logger() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 绑定应用上下文（由 ContextMiddleware 提前注入）
-		appCtx := MustGetContext(c)
+		appCtx := context.MustGetContext(c)
 		// 请求路径
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery

@@ -32,7 +32,7 @@ func NewUserController() *UserController {
 // @Router /api/v1/user/register [post]
 func (uc *UserController) Register(c *gin.Context, req *user.RegisterRequest) (interface{}, error) {
 	// 获取应用Context
-	appCtx := middleware.MustGetContext(c)
+	appCtx := context.MustGetContext(c)
 
 	// 记录操作开始
 	appCtx.LogInfo("开始用户注册")
@@ -72,7 +72,7 @@ func (uc *UserController) Register(c *gin.Context, req *user.RegisterRequest) (i
 // @Router /api/v1/user/login [post]
 func (uc *UserController) Login(c *gin.Context, req *user.LoginRequest) (interface{}, error) {
 	// 获取应用Context
-	appCtx := middleware.MustGetContext(c)
+	appCtx := context.MustGetContext(c)
 
 	// 记录操作开始
 	appCtx.LogInfo("开始用户登录")
@@ -113,7 +113,7 @@ func (uc *UserController) Login(c *gin.Context, req *user.LoginRequest) (interfa
 // @Router /api/v1/user/info [get]
 func (uc *UserController) Info(c *gin.Context, req *user.InfoRequest) (interface{}, error) {
 	// 获取应用Context
-	appCtx := middleware.MustGetContext(c)
+	appCtx := context.MustGetContext(c)
 
 	// 记录操作开始
 	appCtx.LogInfo("开始获取用户信息")

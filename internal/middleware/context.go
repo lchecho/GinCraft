@@ -1,8 +1,6 @@
 package middleware
 
 import (
-	"context"
-
 	"github.com/gin-gonic/gin"
 	pkgCtx "github.com/liuchen/gin-craft/internal/pkg/context"
 	"github.com/liuchen/gin-craft/pkg/logger"
@@ -40,23 +38,4 @@ func ContextMiddleware() gin.HandlerFunc {
 		// 取消应用Context
 		// appCtx.Cancel()
 	}
-}
-
-// GetContext 从gin.Context中获取应用Context
-func GetContext(c context.Context) *pkgCtx.Context {
-	value := c.Value(pkgCtx.CtxKey)
-	if appCtx, ok := value.(*pkgCtx.Context); ok {
-		return appCtx
-	}
-
-	return nil
-}
-
-// MustGetContext 从gin.Context中获取应用Context，如果不存在则panic
-func MustGetContext(c context.Context) *pkgCtx.Context {
-	appCtx := GetContext(c)
-	if appCtx == nil {
-		panic("App context not found in gin.Context")
-	}
-	return appCtx
 }

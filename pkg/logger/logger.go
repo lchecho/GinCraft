@@ -220,10 +220,6 @@ func GetAPILogger() *zap.Logger {
 	return GetModuleLogger("api")
 }
 
-func GetCacheLogger() *zap.Logger {
-	return GetModuleLogger("cache")
-}
-
 func GetCronLogger() *zap.Logger {
 	return GetModuleLogger("cron")
 }

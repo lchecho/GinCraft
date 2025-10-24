@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"github.com/liuchen/gin-craft/internal/pkg/context"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -36,7 +37,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		}
 
 		// 使用应用 Context 记录与传播认证信息
-		appCtx := MustGetContext(c)
+		appCtx := context.MustGetContext(c)
 		appCtx.SetCustomField("token_length", len(token))
 		appCtx.SetCustomField("token", token)
 		// TODO: 在接入真实 JWT 后，从 claims 中解析用户信息
@@ -51,7 +52,7 @@ func AdminAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 先检查是否已经通过基础认证
 		var token string
-		if v, ok := MustGetContext(c).GetCustomField("token"); ok {
+		if v, ok := context.MustGetContext(c).GetCustomField("token"); ok {
 			token, _ = v.(string)
 		}
 		if token == "" {

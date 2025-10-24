@@ -9,6 +9,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/gin-gonic/gin"
+	"github.com/liuchen/gin-craft/internal/pkg/context"
 )
 
 // Recovery 全局异常恢复中间件
@@ -17,7 +18,7 @@ func Recovery() gin.HandlerFunc {
 		defer func() {
 			if err := recover(); err != nil {
 				// 绑定应用上下文（由 ContextMiddleware 提前注入）
-				appCtx := MustGetContext(c)
+				appCtx := context.MustGetContext(c)
 
 				// 检查连接是否已断开
 				// var brokenPipe bool

@@ -1,9 +1,8 @@
 package user
 
 import (
+	"github.com/liuchen/gin-craft/internal/dto"
 	"time"
-
-	"github.com/liuchen/gin-craft/internal/dto/common"
 )
 
 // User 用户响应参数
@@ -23,5 +22,5 @@ type LoginResponse struct {
 // ListResponse 用户列表响应参数
 type ListResponse struct {
 	List []User `json:"list"`
-	common.PaginationResponse
+	dto.Pagination
 }

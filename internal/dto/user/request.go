@@ -1,6 +1,8 @@
 package user
 
-import "github.com/liuchen/gin-craft/internal/dto/common"
+import (
+	"github.com/liuchen/gin-craft/internal/dto"
+)
 
 // RegisterRequest 用户注册请求参数
 type RegisterRequest struct {
@@ -28,7 +30,7 @@ type PasswordUpdateRequest struct {
 
 // ListRequest 用户列表请求参数
 type ListRequest struct {
-	common.PaginationRequest
+	dto.Pagination
 	Username string `form:"username" json:"username" example:"john"` // 用户名筛选
 	Email    string `form:"email" json:"email" example:"john@"`      // 邮箱筛选
 }

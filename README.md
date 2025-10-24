@@ -423,15 +423,6 @@ redis:
   password: ""
   db: 0
   pool_size: 10
-
-trace:
-  enabled: true
-  type: jaeger
-  jaeger:
-    service_name: goframe
-    collector_endpoint: http://localhost:14268/api/traces
-    sampler_type: const
-    sampler_param: 1
 ```
 
 ## 开发指南

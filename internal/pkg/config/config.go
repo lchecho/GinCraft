@@ -46,17 +46,6 @@ type AppConfig struct {
 		DB       int    `mapstructure:"db"`
 		PoolSize int    `mapstructure:"pool_size"`
 	} `mapstructure:"redis"`
-
-	Trace struct {
-		Enabled bool   `mapstructure:"enabled"`
-		Type    string `mapstructure:"type"`
-		Jaeger  struct {
-			ServiceName       string  `mapstructure:"service_name"`
-			CollectorEndpoint string  `mapstructure:"collector_endpoint"`
-			SamplerType       string  `mapstructure:"sampler_type"`
-			SamplerParam      float64 `mapstructure:"sampler_param"`
-		} `mapstructure:"jaeger"`
-	} `mapstructure:"trace"`
 }
 
 // LoadConfig 加载配置

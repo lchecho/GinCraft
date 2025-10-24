@@ -102,6 +102,26 @@ func NewWithDeadline(ctx context.Context, deadline time.Time) *Context {
 	}
 }
 
+// GetContext 从gin.Context中获取应用Context
+func GetContext(c context.Context) *Context {
+	value := c.Value(CtxKey)
+	if ctx, ok := value.(*Context); ok {
+		return ctx
+	}
+
+	return nil
+}
+
+// MustGetContext 从头context.Context中获取应用Context，如果不存在则panic
+func MustGetContext(c context.Context) *Context {
+	ctx := GetContext(c)
+	if ctx == nil {
+		panic("App context not found")
+	}
+
+	return ctx
+}
+
 // SetUser 设置用户信息
 func (c *Context) SetUser(userID, username, userRole string) {
 	c.mu.Lock()
