@@ -5,8 +5,6 @@ import (
 
 	"github.com/liuchen/gin-craft/internal/pkg/config"
 	"github.com/liuchen/gin-craft/pkg/database"
-	"github.com/liuchen/gin-craft/pkg/logger"
-	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -44,10 +42,13 @@ func InitDatabase() error {
 		if err != nil {
 			return
 		}
-
-		logger.Info("Database connected", zap.String("host", cfg.Host), zap.Int("port", cfg.Port))
 	})
 	return err
+}
+
+// GetDatabase 获取数据库
+func GetDatabase() database {
+	return db
 }
 
 // GetDB 获取数据库连接
@@ -58,9 +59,7 @@ func GetDB() *gorm.DB {
 // Close 关闭数据库连接
 func Close() {
 	if db != nil {
-		if err := db.Close(); err != nil {
-			logger.Error("Failed to close database", zap.Error(err))
-		}
+		_ = db.Close()
 	}
 }
 

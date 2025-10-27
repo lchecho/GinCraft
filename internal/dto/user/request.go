@@ -19,12 +19,14 @@ type LoginRequest struct {
 
 // UpdateRequest 用户更新请求参数
 type UpdateRequest struct {
+	ID       uint   `json:"id" binding:"omitempty"`
 	Username string `json:"username" binding:"omitempty,min=3,max=20" example:"john_doe"` // 用户名，3-20个字符
 	Email    string `json:"email" binding:"omitempty,email" example:"john@example.com"`   // 邮箱地址
 }
 
 // PasswordUpdateRequest 用户密码更新请求参数
 type PasswordUpdateRequest struct {
+	ID       uint   `json:"id" binding:"omitempty"`
 	Password string `json:"password" binding:"required,min=6,max=20" example:"newpassword123"` // 新密码，6-20个字符
 }
 
@@ -35,5 +37,7 @@ type ListRequest struct {
 	Email    string `form:"email" json:"email" example:"john@"`      // 邮箱筛选
 }
 
-// InfoRequest 获取用户信息请求参数（空结构体，因为信息从token中获取）
-type InfoRequest struct{}
+// InfoRequest 获取用户信息请求参数
+type InfoRequest struct {
+	ID uint `json:"id" binding:"required"`
+}

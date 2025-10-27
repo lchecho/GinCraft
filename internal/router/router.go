@@ -42,6 +42,10 @@ func InitRouter() *gin.Engine {
 			userController := controller.NewUserController()
 			v1.POST("/user/register", elegantRouter.WrapRequestHandler(userController.Register))
 			v1.POST("/user/login", elegantRouter.WrapRequestHandler(userController.Login))
+			v1.POST("/user/list", elegantRouter.WrapRequestHandler(userController.List))
+			v1.GET("/user/info", elegantRouter.WrapRequestHandler(userController.Info))
+			v1.POST("/user/edit", elegantRouter.WrapRequestHandler(userController.Update))
+			v1.POST("/user/delete", elegantRouter.WrapRequestHandler(userController.Delete))
 
 			// 需要认证的用户路由（使用中间件）
 			authUser := v1.Group("/user", middleware.AuthMiddleware())

@@ -1,6 +1,11 @@
 package service
 
 import (
+	"context"
+	dtoUser "github.com/liuchen/gin-craft/internal/dto/user"
+	pkgCtx "github.com/liuchen/gin-craft/internal/pkg/context"
+	"github.com/liuchen/gin-craft/internal/pkg/database"
+	"go.uber.org/zap"
 	"time"
 
 	"github.com/liuchen/gin-craft/internal/constant"
@@ -19,9 +24,9 @@ var UserService = &userService{
 }
 
 // Register 用户注册
-func (s *userService) Register(username, password, email string) error {
+func (s *userService) Register(req *dtoUser.RegisterRequest) error {
 	// 检查用户名是否已存在
-	usernameExists, err := s.userDAO.ExistsByUsername(username)
+	usernameExists, err := s.userDAO.ExistsByUsername(req.Username)
 	if err != nil {
 		return err
 	}
@@ -30,7 +35,7 @@ func (s *userService) Register(username, password, email string) error {
 	}
 
 	// 检查邮箱是否已存在
-	emailExists, err := s.userDAO.ExistsByEmail(email)
+	emailExists, err := s.userDAO.ExistsByEmail(req.Email)
 	if err != nil {
 		return err
 	}
@@ -40,77 +45,117 @@ func (s *userService) Register(username, password, email string) error {
 
 	// 创建用户
 	user := &model.User{
-		Username: username,
-		Password: password, // 实际应用中应该对密码进行加密
-		Email:    email,
+		Username: req.Username,
+		Password: req.Password, // 实际应用中应该对密码进行加密
+		Email:    req.Email,
 	}
 
 	return s.userDAO.Create(user)
 }
 
 // Login 用户登录
-func (s *userService) Login(username, password string) (string, error) {
-	user, err := s.userDAO.GetByUsername(username)
+func (s *userService) Login(ctx context.Context, req *dtoUser.LoginRequest) (string, error) {
+	appCtx := pkgCtx.MustGetContext(ctx)
+
+	user, err := s.userDAO.GetByUsername(req.Username)
 	if err != nil {
 		return "", err
 	}
-
 	// 实际应用中应该验证密码
-	if user.Password != password {
+	if user.Password != req.Password {
 		return "", errors.New(constant.PasswordError)
 	}
-
 	// 生成 token
-	token := "mock_token_" + username + "_" + time.Now().Format("20060102150405")
+	token := "mock_token_" + req.Username + "_" + time.Now().Format("20060102150405")
+
+	appCtx.LogInfo("用户登录成功", zap.String("username", req.Username))
+
 	return token, nil
 }
 
+// GetUserList 获取用户列表
+func (s *userService) GetUserList(req *dtoUser.ListRequest) (*dtoUser.ListResponse, error) {
+	users, err := s.userDAO.GetList(req)
+	if err != nil {
+		return nil, err
+	}
+
+	// 转换为DTO
+	userList := make([]dtoUser.User, 0, len(users))
+	for _, u := range users {
+		userList = append(userList, dtoUser.User{
+			ID:        u.ID,
+			Username:  u.Username,
+			Email:     u.Email,
+			CreatedAt: u.CreatedAt,
+			UpdatedAt: u.UpdatedAt,
+		})
+	}
+
+	return &dtoUser.ListResponse{
+		List:       userList,
+		Pagination: req.Pagination,
+	}, nil
+}
+
 // GetUserInfo 获取用户信息
-func (s *userService) GetUserInfo(token string) (*model.User, error) {
-	// 实际应用中应该解析 token 获取用户 ID
-	// 这里暂时返回 ID 为 1 的用户
-	user, err := s.userDAO.GetByID(1)
+func (s *userService) GetUserInfo(req *dtoUser.InfoRequest) (*model.User, error) {
+	// 获取用户
+	var user model.User
+	err := dao.FirstByCondition(database.GetDatabase(), &user, map[string]interface{}{"id": req.ID})
 	if err != nil {
 		return nil, err
 	}
-	return user, nil
-}
+	if user.ID == 0 {
+		return nil, errors.New(constant.UserNotExist)
+	}
 
-// GetUserByID 根据ID获取用户
-func (s *userService) GetUserByID(id int) (*model.User, error) {
-	user, err := s.userDAO.GetByID(id)
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
-}
-
-// GetUserByEmail 根据邮箱获取用户
-func (s *userService) GetUserByEmail(email string) (*model.User, error) {
-	user, err := s.userDAO.GetByEmail(email)
-	if err != nil {
-		return nil, err
-	}
-	return user, nil
+	return &user, nil
 }
 
 // UpdateUser 更新用户信息
-func (s *userService) UpdateUser(id int, updates map[string]interface{}) error {
-	return s.userDAO.Update(id, updates)
+func (s *userService) UpdateUser(ctx context.Context, req *dtoUser.UpdateRequest) error {
+	appCtx := pkgCtx.MustGetContext(ctx)
+
+	// 获取用户
+	var user model.User
+	err := dao.FirstByCondition(database.GetDatabase(), &user, map[string]interface{}{"id": req.ID})
+	if err != nil {
+		return err
+	}
+	if user.ID == 0 {
+		return errors.New(constant.UserNotExist)
+	}
+
+	updates := make(map[string]interface{})
+	err = s.userDAO.Update(req.ID, updates)
+	if err != nil {
+		return err
+	}
+	appCtx.LogInfo("更新用户信息", zap.Uint("user_id", req.ID))
+
+	return nil
 }
 
 // DeleteUser 删除用户
-func (s *userService) DeleteUser(id int) error {
-	return s.userDAO.Delete(id)
-}
+func (s *userService) DeleteUser(ctx context.Context, req *dtoUser.InfoRequest) error {
+	appCtx := pkgCtx.MustGetContext(ctx)
 
-// GetUserList 获取用户列表
-func (s *userService) GetUserList(page, pageSize int) ([]model.User, int64, error) {
-	return s.userDAO.GetList(page, pageSize)
-}
+	// 获取用户
+	var user model.User
+	err := dao.FirstByCondition(database.GetDatabase(), &user, map[string]interface{}{"id": req.ID})
+	if err != nil {
+		return err
+	}
+	if user.ID == 0 {
+		return errors.New(constant.UserNotExist)
+	}
 
-// UpdatePassword 更新密码
-func (s *userService) UpdatePassword(id int, password string) error {
-	// 实际应用中应该对密码进行加密
-	return s.userDAO.UpdatePassword(id, password)
+	err = s.userDAO.Delete(req.ID)
+	if err != nil {
+		return err
+	}
+	appCtx.LogInfo("删除用户信息", zap.Uint("user_id", req.ID))
+
+	return nil
 }

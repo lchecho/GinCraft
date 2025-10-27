@@ -4,10 +4,8 @@ import (
 	"sync"
 
 	"github.com/liuchen/gin-craft/internal/pkg/config"
-	"github.com/liuchen/gin-craft/pkg/logger"
 	pkgredis "github.com/liuchen/gin-craft/pkg/redis"
 	"github.com/redis/go-redis/v9"
-	"go.uber.org/zap"
 )
 
 var (
@@ -46,8 +44,6 @@ func InitRedis() error {
 		if err != nil {
 			return
 		}
-
-		logger.Info("Redis connected", zap.String("host", cfg.Host), zap.Int("port", cfg.Port))
 	})
 	return err
 }
@@ -68,8 +64,6 @@ func GetRedisClient() *pkgredis.Client {
 // Close 关闭Redis连接
 func Close() {
 	if client != nil {
-		if err := client.Close(); err != nil {
-			logger.Error("Failed to close Redis connection", zap.Error(err))
-		}
+		_ = client.Close()
 	}
 }
