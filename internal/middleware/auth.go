@@ -1,105 +1,81 @@
 package middleware
 
 import (
-	"github.com/liuchen/gin-craft/internal/pkg/context"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/liuchen/gin-craft/internal/constant"
-	"github.com/liuchen/gin-craft/pkg/errors"
-	"github.com/liuchen/gin-craft/pkg/response"
+	appctx "github.com/liuchen/gin-craft/internal/pkg/context"
+	"github.com/liuchen/gin-craft/internal/pkg/errors"
+	"github.com/liuchen/gin-craft/internal/pkg/response"
+	"github.com/liuchen/gin-craft/internal/pkg/config"
 )
 
-// AuthMiddleware JWT认证中间件
+const (
+	// ctxHasTokenKey 仅标记请求携带了 token，不存明文 token 本身
+	ctxHasTokenKey = "has_token"
+)
+
+// AuthMiddleware Bearer 认证中间件
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 获取Authorization头
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			response.Error(c, errors.New(constant.Unauthorized, "缺少认证令牌"))
-			c.Abort()
+		if authHeader == "" || !strings.HasPrefix(authHeader, "Bearer ") {
+			unauthorized(c, "认证令牌无效")
 			return
 		}
-
-		// 检查Bearer前缀
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			response.Error(c, errors.New(constant.Unauthorized, "认证令牌格式错误"))
-			c.Abort()
-			return
-		}
-
-		// 提取token
 		token := strings.TrimPrefix(authHeader, "Bearer ")
 		if token == "" {
-			response.Error(c, errors.New(constant.Unauthorized, "认证令牌为空"))
-			c.Abort()
+			unauthorized(c, "认证令牌为空")
 			return
 		}
 
-		// 使用应用 Context 记录与传播认证信息
-		appCtx := context.MustGetContext(c)
-		appCtx.SetCustomField("token_length", len(token))
-		appCtx.SetCustomField("token", token)
-		// TODO: 在接入真实 JWT 后，从 claims 中解析用户信息
-		appCtx.SetUser("123", "user_123", "user")
+		// TODO: 接入真实 JWT 后，从 claims 中解析用户信息
+		userID, username, role := "123", "user_123", "user"
 
+		appCtx := appctx.MustGetContext(c)
+		appCtx.SetUser(userID, username, role)
+		appCtx.SetCustomField(ctxHasTokenKey, true) // 仅标记，不写 token 原文
 		c.Next()
 	}
 }
 
-// AdminAuthMiddleware 管理员认证中间件
+// AdminAuthMiddleware 管理员认证中间件（必须在 AuthMiddleware 之后）
 func AdminAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 先检查是否已经通过基础认证
-		var token string
-		if v, ok := context.MustGetContext(c).GetCustomField("token"); ok {
-			token, _ = v.(string)
-		}
-		if token == "" {
-			response.Error(c, errors.New(constant.Unauthorized, "需要先进行认证"))
-			c.Abort()
-			return
-		}
-
-		// 这里可以添加管理员权限检查逻辑
-		// 简化处理，假设token中包含admin标识
-		if !strings.Contains(token, "admin") {
+		appCtx := appctx.MustGetContext(c)
+		if appCtx.GetUserRole() != "admin" {
 			response.Error(c, errors.New(constant.Forbidden, "需要管理员权限"))
 			c.Abort()
 			return
 		}
-
 		c.Next()
 	}
 }
 
-// RateLimitMiddleware 限流中间件
+// RateLimitMiddleware 限流中间件占位实现
 func RateLimitMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// 这里可以添加限流逻辑
-		// 简化处理，直接通过
+		// TODO: 接入真实的基于 token/ip 的限流
 		c.Next()
 	}
 }
 
-// ValidateAPIKeyMiddleware API密钥验证中间件
+// ValidateAPIKeyMiddleware API 密钥校验，密钥从 config.app.api_key 读取
 func ValidateAPIKeyMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		expected := config.Config.App.APIKey
 		apiKey := c.GetHeader("X-API-Key")
-		if apiKey == "" {
-			response.Error(c, errors.New(constant.Unauthorized, "缺少API密钥"))
-			c.Abort()
-			return
-		}
-
-		// 这里可以添加API密钥验证逻辑
-		// 简化处理，检查是否为预设值
-		if apiKey != "your-api-key" {
+		if expected == "" || apiKey == "" || apiKey != expected {
 			response.Error(c, errors.New(constant.Unauthorized, "无效的API密钥"))
 			c.Abort()
 			return
 		}
-
 		c.Next()
 	}
+}
+
+func unauthorized(c *gin.Context, msg string) {
+	response.Error(c, errors.New(constant.Unauthorized, msg))
+	c.Abort()
 }

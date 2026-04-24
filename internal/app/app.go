@@ -13,12 +13,10 @@ import (
 
 // Init 初始化应用
 func Init(configPath string) error {
-	// 加载配置
 	if err := config.LoadConfig(configPath); err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	// 初始化日志
 	if err := logger.InitLogger(
 		config.Config.Log.Level,
 		config.Config.Log.Filename,
@@ -30,19 +28,20 @@ func Init(configPath string) error {
 		return fmt.Errorf("failed to initialize logger: %w", err)
 	}
 
-	// 初始化数据库
 	if err := database.InitDatabase(); err != nil {
 		logger.Error("Failed to initialize database", zap.Error(err))
 		return fmt.Errorf("failed to initialize database: %w", err)
 	}
 
-	// 初始化Redis
 	if err := redis.InitRedis(); err != nil {
 		logger.Error("Failed to initialize Redis", zap.Error(err))
+		// Redis 失败时回收已建立的 MySQL 连接，避免连接泄漏
+		if closeErr := database.Close(); closeErr != nil {
+			logger.Error("close database on rollback", zap.Error(closeErr))
+		}
 		return fmt.Errorf("failed to initialize Redis: %w", err)
 	}
 
-	// 初始化定时任务
 	cron.InitCron()
 
 	logger.Info("Application initialized successfully")
@@ -51,15 +50,10 @@ func Init(configPath string) error {
 
 // Close 关闭应用
 func Close() {
-	// 关闭数据库连接
-	database.Close()
-
-	// 关闭Redis连接
+	if err := database.Close(); err != nil {
+		logger.Error("close database", zap.Error(err))
+	}
 	redis.Close()
-
-	// 停止定时任务
 	cron.Stop()
-
-	// 关闭日志
 	logger.Close()
 }

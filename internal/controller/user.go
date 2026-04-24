@@ -4,7 +4,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/liuchen/gin-craft/internal/dto/user"
 	"github.com/liuchen/gin-craft/internal/service"
-	_ "github.com/liuchen/gin-craft/pkg/response"
 )
 
 // UserController 用户控制器结构体
@@ -38,7 +37,7 @@ func (uc *UserController) Register(c *gin.Context, req *user.RegisterRequest) (i
 // @Success 200 {object} user.LoginResponse "登录成功"
 // @Router /api/v1/user/login [post]
 func (uc *UserController) Login(c *gin.Context, req *user.LoginRequest) (interface{}, error) {
-	return service.UserService.Login(c, req)
+	return service.UserService.Login(c.Request.Context(), req)
 }
 
 // List 获取用户列表
@@ -49,7 +48,7 @@ func (uc *UserController) Login(c *gin.Context, req *user.LoginRequest) (interfa
 // @Produce json
 // @Param request body user.ListRequest true "用户列表信息"
 // @Success 200 {object} user.ListResponse "获取成功"
-// @Router /api/v1/user/info [post]
+// @Router /api/v1/user/list [post]
 func (uc *UserController) List(c *gin.Context, req *user.ListRequest) (interface{}, error) {
 	return service.UserService.GetUserList(req)
 }
@@ -75,9 +74,9 @@ func (uc *UserController) Info(c *gin.Context, req *user.InfoRequest) (interface
 // @Produce json
 // @Param request body user.UpdateRequest true "更新信息"
 // @Success 200 {object} response.Response "更新成功"
-// @Router /api/v1/user/update [post]
+// @Router /api/v1/user/edit [post]
 func (uc *UserController) Update(c *gin.Context, req *user.UpdateRequest) (interface{}, error) {
-	return nil, service.UserService.UpdateUser(c, req)
+	return nil, service.UserService.UpdateUser(c.Request.Context(), req)
 }
 
 // Delete 删除用户
@@ -90,5 +89,5 @@ func (uc *UserController) Update(c *gin.Context, req *user.UpdateRequest) (inter
 // @Success 200 {object} response.Response "删除成功"
 // @Router /api/v1/user/delete [post]
 func (uc *UserController) Delete(c *gin.Context, req *user.InfoRequest) (interface{}, error) {
-	return nil, service.UserService.DeleteUser(c, req)
+	return nil, service.UserService.DeleteUser(c.Request.Context(), req)
 }

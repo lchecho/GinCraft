@@ -2,28 +2,31 @@ package utils
 
 import (
 	"crypto/md5"
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"math/rand"
 	"os"
 	"path/filepath"
 	"time"
 )
 
-// MD5 计算字符串的MD5值
+// MD5 计算字符串的 MD5 值。
+// ⚠️ 仅用于做非安全场景的指纹（如缓存 key）；严禁用于密码散列，请使用 HashPassword。
 func MD5(str string) string {
 	h := md5.New()
 	h.Write([]byte(str))
 	return hex.EncodeToString(h.Sum(nil))
 }
 
-// RandomString 生成指定长度的随机字符串
+// RandomString 生成指定长度的随机字符串（基于 crypto/rand，适合用于 token、邀请码等安全场景）。
 func RandomString(length int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-	seededRand := rand.New(rand.NewSource(time.Now().UnixNano()))
 	b := make([]byte, length)
+	if _, err := rand.Read(b); err != nil {
+		return ""
+	}
 	for i := range b {
-		b[i] = charset[seededRand.Intn(len(charset))]
+		b[i] = charset[int(b[i])%len(charset)]
 	}
 	return string(b)
 }
@@ -48,6 +51,7 @@ func GetCurrentTime() string {
 	return FormatTime(time.Now())
 }
 
+// GetRoot 向上查找项目根目录（以 go.mod 或 config/config.yaml 作为标识）
 func GetRoot() (string, error) {
 	dir, err := os.Getwd()
 	if err != nil {

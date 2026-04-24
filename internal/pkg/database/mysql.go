@@ -4,12 +4,12 @@ import (
 	"sync"
 
 	"github.com/liuchen/gin-craft/internal/pkg/config"
-	"github.com/liuchen/gin-craft/pkg/database"
+	pkgdb "github.com/liuchen/gin-craft/pkg/database"
 	"gorm.io/gorm"
 )
 
 var (
-	db   database.Database
+	db   pkgdb.Database
 	once sync.Once
 )
 
@@ -18,9 +18,7 @@ func InitDatabase() error {
 	var err error
 	once.Do(func() {
 		cfg := config.Config.MySQL
-
-		// 创建MySQL数据库实例
-		mysqlConfig := &database.MySQLConfig{
+		mysqlConfig := &pkgdb.MySQLConfig{
 			Host:            cfg.Host,
 			Port:            cfg.Port,
 			Username:        cfg.Username,
@@ -31,36 +29,34 @@ func InitDatabase() error {
 			ConnMaxLifetime: cfg.ConnMaxLifetime,
 		}
 
-		db = database.NewMySQLDatabase(mysqlConfig)
-		err = db.Connect()
-		if err != nil {
+		db = pkgdb.NewMySQLDatabase(mysqlConfig)
+		if err = db.Connect(); err != nil {
 			return
 		}
-
-		// 测试连接
 		err = db.Ping()
-		if err != nil {
-			return
-		}
 	})
 	return err
 }
 
-// GetDatabase 获取数据库
-func GetDatabase() database {
+// GetDatabase 获取 Database 接口实例
+func GetDatabase() pkgdb.Database {
 	return db
 }
 
-// GetDB 获取数据库连接
+// GetDB 获取底层 *gorm.DB
 func GetDB() *gorm.DB {
+	if db == nil {
+		return nil
+	}
 	return db.GetDB()
 }
 
 // Close 关闭数据库连接
-func Close() {
-	if db != nil {
-		_ = db.Close()
+func Close() error {
+	if db == nil {
+		return nil
 	}
+	return db.Close()
 }
 
 // Migrate 数据库迁移

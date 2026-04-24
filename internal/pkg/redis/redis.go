@@ -13,42 +13,34 @@ var (
 	once   sync.Once
 )
 
-// InitRedis 初始化Redis连接
+// InitRedis 初始化 Redis 连接
 func InitRedis() error {
 	var err error
 	once.Do(func() {
 		cfg := config.Config.Redis
-
-		// 创建Redis客户端实例
 		redisConfig := &pkgredis.Config{
 			Host:         cfg.Host,
 			Port:         cfg.Port,
 			Password:     cfg.Password,
 			DB:           cfg.DB,
 			PoolSize:     cfg.PoolSize,
-			MinIdleConns: 5,
-			MaxRetries:   3,
-			DialTimeout:  5,
-			ReadTimeout:  3,
-			WriteTimeout: 3,
+			MinIdleConns: cfg.MinIdleConns,
+			MaxRetries:   cfg.MaxRetries,
+			DialTimeout:  cfg.DialTimeout,
+			ReadTimeout:  cfg.ReadTimeout,
+			WriteTimeout: cfg.WriteTimeout,
 		}
 
 		client = pkgredis.NewClient(redisConfig)
-		err = client.Connect()
-		if err != nil {
+		if err = client.Connect(); err != nil {
 			return
 		}
-
-		// 测试连接
 		err = client.Ping()
-		if err != nil {
-			return
-		}
 	})
 	return err
 }
 
-// GetClient 获取Redis客户端
+// GetClient 获取底层 *redis.Client
 func GetClient() *redis.Client {
 	if client == nil {
 		return nil
@@ -56,12 +48,12 @@ func GetClient() *redis.Client {
 	return client.GetClient()
 }
 
-// GetRedisClient 获取封装的Client接口
+// GetRedisClient 获取封装后的 Client
 func GetRedisClient() *pkgredis.Client {
 	return client
 }
 
-// Close 关闭Redis连接
+// Close 关闭 Redis 连接
 func Close() {
 	if client != nil {
 		_ = client.Close()

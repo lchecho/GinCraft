@@ -211,21 +211,22 @@ func (r *Client) SetJSON(ctx context.Context, key string, value interface{}, exp
 	return r.client.Set(ctx, key, data, expiration).Err()
 }
 
-// GetJSON 从Redis获取JSON数据
+// ErrRedisKeyNotFound 表示 Redis 中不存在该 key
+var ErrRedisKeyNotFound = errors.New("redis: key not found")
+
+// GetJSON 从 Redis 获取 JSON 数据；key 不存在时返回 ErrRedisKeyNotFound
 func (r *Client) GetJSON(ctx context.Context, key string, dest interface{}) error {
 	data, err := r.client.Get(ctx, key).Result()
-	if err != nil && !errors.Is(err, redis.Nil) {
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			return ErrRedisKeyNotFound
+		}
 		return fmt.Errorf("failed to get from Redis: %w", err)
-	}
-
-	if data == "" {
-		return nil
 	}
 
 	if err = jsoniter.Unmarshal([]byte(data), dest); err != nil {
 		return fmt.Errorf("failed to unmarshal JSON: %w", err)
 	}
-
 	return nil
 }
 

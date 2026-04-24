@@ -1,88 +1,62 @@
 package router
 
-import (
-	"github.com/gin-gonic/gin"
-)
+import "github.com/gin-gonic/gin"
 
-// ElegantRouter 优雅的路由器，封装 gin.IRoutes
+// ElegantRouter 薄封装 gin.IRoutes，主要提供泛型 WrapRequestHandler 的路由入口。
 type ElegantRouter struct {
 	routes gin.IRoutes
-	engine *gin.Engine
-	group  *gin.RouterGroup
 }
 
-// NewElegantRouter 创建优雅路由器（从 Engine）
+// NewElegantRouter 从 *gin.Engine 构造
 func NewElegantRouter(engine *gin.Engine) *ElegantRouter {
-	return &ElegantRouter{routes: engine, engine: engine}
+	return &ElegantRouter{routes: engine}
 }
 
-// NewElegantRouterGroup 创建优雅路由器（从 RouterGroup）
-func NewElegantRouterGroup(group *gin.RouterGroup) *ElegantRouter {
-	return &ElegantRouter{routes: group, group: group}
+// NewElegantRouterGroup 从 *gin.RouterGroup 构造
+func NewElegantRouterGroup(g *gin.RouterGroup) *ElegantRouter {
+	return &ElegantRouter{routes: g}
 }
 
-// Group 创建路由组，支持可选中间件
-func (r *ElegantRouter) Group(relativePath string, middleware ...gin.HandlerFunc) *ElegantRouter {
-	var group *ElegantRouter
-
-	if r.engine != nil {
-		group = NewElegantRouterGroup(r.engine.Group(relativePath))
-	} else if r.group != nil {
-		group = NewElegantRouterGroup(r.group.Group(relativePath))
-	} else {
+// Group 创建子路由组（与 gin.RouterGroup.Group 语义一致）
+func (r *ElegantRouter) Group(path string, mws ...gin.HandlerFunc) *ElegantRouter {
+	type grouper interface {
+		Group(string, ...gin.HandlerFunc) *gin.RouterGroup
+	}
+	g, ok := r.routes.(grouper)
+	if !ok {
 		return r
 	}
-
-	// 如果提供了中间件，则添加到路由组
-	if len(middleware) > 0 {
-		group.Use(middleware...)
-	}
-
-	return group
+	return NewElegantRouterGroup(g.Group(path, mws...))
 }
 
 // Use 添加中间件
-func (r *ElegantRouter) Use(middleware ...gin.HandlerFunc) gin.IRoutes {
-	return r.routes.Use(middleware...)
+func (r *ElegantRouter) Use(mws ...gin.HandlerFunc) gin.IRoutes {
+	return r.routes.Use(mws...)
 }
 
-// WithMiddleware 为当前路由器添加中间件并返回新的路由器实例
-func (r *ElegantRouter) WithMiddleware(middleware ...gin.HandlerFunc) *ElegantRouter {
-	newRouter := &ElegantRouter{
-		routes: r.routes,
-		engine: r.engine,
-		group:  r.group,
-	}
-	newRouter.Use(middleware...)
-	return newRouter
+// combine 拷贝出新切片，避免共享 variadic 底层数组
+func combine(mws []gin.HandlerFunc, h gin.HandlerFunc) []gin.HandlerFunc {
+	out := make([]gin.HandlerFunc, 0, len(mws)+1)
+	out = append(out, mws...)
+	return append(out, h)
 }
 
-// GET 处理 GET 请求
-func (r *ElegantRouter) GET(relativePath string, handlerFunc gin.HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
-	handlers := append(middleware, handlerFunc)
-	return r.routes.GET(relativePath, handlers...)
+func (r *ElegantRouter) GET(p string, h gin.HandlerFunc, mws ...gin.HandlerFunc) gin.IRoutes {
+	return r.routes.GET(p, combine(mws, h)...)
 }
 
-// POST 处理 POST 请求
-func (r *ElegantRouter) POST(relativePath string, handlerFunc gin.HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
-	handlers := append(middleware, handlerFunc)
-	return r.routes.POST(relativePath, handlers...)
+func (r *ElegantRouter) POST(p string, h gin.HandlerFunc, mws ...gin.HandlerFunc) gin.IRoutes {
+	return r.routes.POST(p, combine(mws, h)...)
 }
 
-// PUT 处理 PUT 请求
-func (r *ElegantRouter) PUT(relativePath string, handlerFunc gin.HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
-	handlers := append(middleware, handlerFunc)
-	return r.routes.PUT(relativePath, handlers...)
+func (r *ElegantRouter) PUT(p string, h gin.HandlerFunc, mws ...gin.HandlerFunc) gin.IRoutes {
+	return r.routes.PUT(p, combine(mws, h)...)
 }
 
-// DELETE 处理 DELETE 请求
-func (r *ElegantRouter) DELETE(relativePath string, handlerFunc gin.HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
-	handlers := append(middleware, handlerFunc)
-	return r.routes.DELETE(relativePath, handlers...)
+func (r *ElegantRouter) DELETE(p string, h gin.HandlerFunc, mws ...gin.HandlerFunc) gin.IRoutes {
+	return r.routes.DELETE(p, combine(mws, h)...)
 }
 
-// PATCH 处理 PATCH 请求
-func (r *ElegantRouter) PATCH(relativePath string, handlerFunc gin.HandlerFunc, middleware ...gin.HandlerFunc) gin.IRoutes {
-	handlers := append(middleware, handlerFunc)
-	return r.routes.PATCH(relativePath, handlers...)
+func (r *ElegantRouter) PATCH(p string, h gin.HandlerFunc, mws ...gin.HandlerFunc) gin.IRoutes {
+	return r.routes.PATCH(p, combine(mws, h)...)
 }

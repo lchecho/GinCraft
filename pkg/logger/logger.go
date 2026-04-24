@@ -2,6 +2,7 @@ package logger
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -148,6 +149,17 @@ func WithTraceID() string {
 	return uuid.New().String()
 }
 
+// TraceIDFromHeaders 从请求头中提取 TraceID；找不到则生成新的 UUID。
+// 依次尝试：X-Trace-ID、X-Request-ID、traceparent（W3C）。
+func TraceIDFromHeaders(h http.Header) string {
+	for _, k := range []string{"X-Trace-ID", "X-Request-ID", "Traceparent"} {
+		if v := h.Get(k); v != "" {
+			return v
+		}
+	}
+	return uuid.New().String()
+}
+
 // Debug 调试日志
 func Debug(msg string, fields ...zap.Field) {
 	Log.Debug(msg, fields...)
@@ -218,6 +230,10 @@ func GetDatabaseLogger() *zap.Logger {
 
 func GetAPILogger() *zap.Logger {
 	return GetModuleLogger("api")
+}
+
+func GetCacheLogger() *zap.Logger {
+	return GetModuleLogger("cache")
 }
 
 func GetCronLogger() *zap.Logger {

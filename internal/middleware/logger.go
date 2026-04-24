@@ -9,6 +9,9 @@ import (
 	"github.com/liuchen/gin-craft/internal/pkg/context"
 )
 
+// maxLoggedBody 日志中保留的响应体最大字节数
+const maxLoggedBody = 1024
+
 // responseWriter 包装gin.ResponseWriter以捕获响应体
 type responseWriter struct {
 	gin.ResponseWriter
@@ -79,9 +82,13 @@ func Logger() gin.HandlerFunc {
 		appCtx.AddLogField("status", statusCode)
 		appCtx.AddLogField("response_size", responseSize)
 
-		// 添加响应体（如果需要记录且不是文件下载等）
-		if shouldLogResponseBody(c.Writer.Header().Get("Content-Type")) && w.body.Len() > 0 && w.body.Len() < 1024 {
-			appCtx.AddLogField("response_body", w.body.String())
+		// 添加响应体（超过 maxLoggedBody 时截断）
+		if shouldLogResponseBody(c.Writer.Header().Get("Content-Type")) && w.body.Len() > 0 {
+			body := w.body.String()
+			if len(body) > maxLoggedBody {
+				body = body[:maxLoggedBody] + "...(truncated)"
+			}
+			appCtx.AddLogField("response_body", body)
 		}
 
 		// 添加错误信息

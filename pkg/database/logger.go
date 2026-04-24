@@ -29,9 +29,10 @@ func NewGormLogger() *GormLogger {
 	}
 }
 
-// LogMode 设置日志级别
-func (l *GormLogger) LogMode(level gormlogger.LogLevel) gormlogger.Interface {
-	return l
+// LogMode 设置日志级别（返回新实例，符合 GORM 语义）
+func (l *GormLogger) LogMode(_ gormlogger.LogLevel) gormlogger.Interface {
+	cp := *l
+	return &cp
 }
 
 // Info 打印信息

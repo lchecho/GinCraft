@@ -1,59 +1,51 @@
 package context
 
 import (
-	"context"
-	"github.com/liuchen/gin-craft/pkg/logger"
+	stdctx "context"
 	"sync"
 	"time"
 
+	"github.com/liuchen/gin-craft/pkg/logger"
 	"go.uber.org/zap"
 )
 
-// CtxKey 用于在gin.Context中存储自定义Context的键
-const CtxKey = "custom_context"
+// ctxKeyType 未导出的 context key 类型，避免 key 碰撞
+type ctxKeyType struct{}
 
-// Context 自定义上下文结构体，用于追踪请求或任务的上下文信息
+// CtxKey 自定义 context key（在 context.WithValue 中使用）
+var CtxKey = ctxKeyType{}
+
+// Context 自定义上下文结构体
 type Context struct {
-	// 原始context
-	ctx context.Context
-	// 取消函数
-	cancel context.CancelFunc
+	ctx    stdctx.Context
+	cancel stdctx.CancelFunc
 
-	// 基础信息
-	TraceID   string    // 追踪ID
-	StartTime time.Time // 开始时间
+	TraceID   string
+	StartTime time.Time
 
-	// 用户信息
-	UserID   string // 用户ID
-	Username string // 用户名
-	UserRole string // 用户角色
+	UserID   string
+	Username string
+	UserRole string
 
-	// 请求信息
-	Method    string // HTTP方法
-	Path      string // 请求路径
-	ClientIP  string // 客户端IP
-	UserAgent string // 用户代理
+	Method    string
+	Path      string
+	ClientIP  string
+	UserAgent string
 
-	// 自定义字段
-	CustomFields map[string]interface{} // 自定义字段
+	CustomFields map[string]interface{}
 
-	// 日志相关
-	logger    *zap.Logger // 日志记录器
-	logFields []zap.Field // 日志字段
+	logger    *zap.Logger
+	logFields []zap.Field
 
-	// 互斥锁，用于并发安全
 	mu sync.RWMutex
 }
 
-// New 创建新的Context实例
-func New(ctx context.Context) *Context {
+// New 创建新的 Context 实例
+func New(ctx stdctx.Context) *Context {
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = stdctx.Background()
 	}
-
-	// 创建可取消的context
-	ctx, cancel := context.WithCancel(ctx)
-
+	ctx, cancel := stdctx.WithCancel(ctx)
 	return &Context{
 		ctx:          ctx,
 		cancel:       cancel,
@@ -64,15 +56,21 @@ func New(ctx context.Context) *Context {
 	}
 }
 
-// NewWithTimeout 创建带超时的Context实例
-func NewWithTimeout(ctx context.Context, timeout time.Duration) *Context {
-	if ctx == nil {
-		ctx = context.Background()
+// NewWithTraceID 使用指定 traceID 创建 Context
+func NewWithTraceID(ctx stdctx.Context, traceID string) *Context {
+	c := New(ctx)
+	if traceID != "" {
+		c.TraceID = traceID
 	}
+	return c
+}
 
-	// 创建带超时的context
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-
+// NewWithTimeout 创建带超时的 Context
+func NewWithTimeout(ctx stdctx.Context, timeout time.Duration) *Context {
+	if ctx == nil {
+		ctx = stdctx.Background()
+	}
+	ctx, cancel := stdctx.WithTimeout(ctx, timeout)
 	return &Context{
 		ctx:          ctx,
 		cancel:       cancel,
@@ -83,15 +81,12 @@ func NewWithTimeout(ctx context.Context, timeout time.Duration) *Context {
 	}
 }
 
-// NewWithDeadline 创建带截止时间的Context实例
-func NewWithDeadline(ctx context.Context, deadline time.Time) *Context {
+// NewWithDeadline 创建带截止时间的 Context
+func NewWithDeadline(ctx stdctx.Context, deadline time.Time) *Context {
 	if ctx == nil {
-		ctx = context.Background()
+		ctx = stdctx.Background()
 	}
-
-	// 创建带截止时间的context
-	ctx, cancel := context.WithDeadline(ctx, deadline)
-
+	ctx, cancel := stdctx.WithDeadline(ctx, deadline)
 	return &Context{
 		ctx:          ctx,
 		cancel:       cancel,
@@ -102,121 +97,111 @@ func NewWithDeadline(ctx context.Context, deadline time.Time) *Context {
 	}
 }
 
-// GetContext 从gin.Context中获取应用Context
-func GetContext(c context.Context) *Context {
-	value := c.Value(CtxKey)
-	if ctx, ok := value.(*Context); ok {
-		return ctx
+// GetContext 从任意 context.Context 中取出自定义 Context
+func GetContext(c stdctx.Context) *Context {
+	if c == nil {
+		return nil
 	}
-
+	if v, ok := c.Value(CtxKey).(*Context); ok {
+		return v
+	}
 	return nil
 }
 
-// MustGetContext 从头context.Context中获取应用Context，如果不存在则panic
-func MustGetContext(c context.Context) *Context {
+// MustGetContext 同 GetContext，找不到则 panic
+func MustGetContext(c stdctx.Context) *Context {
 	ctx := GetContext(c)
 	if ctx == nil {
 		panic("App context not found")
 	}
-
 	return ctx
 }
 
 // SetUser 设置用户信息
 func (c *Context) SetUser(userID, username, userRole string) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	c.UserID = userID
 	c.Username = username
 	c.UserRole = userRole
-
-	// 添加到日志字段
-	c.AddLogField("user_id", userID)
-	c.AddLogField("username", username)
-	c.AddLogField("user_role", userRole)
+	c.logFields = append(c.logFields,
+		zap.String("user_id", userID),
+		zap.String("username", username),
+		zap.String("user_role", userRole),
+	)
+	c.mu.Unlock()
 }
 
 // SetRequestInfo 设置请求信息
 func (c *Context) SetRequestInfo(method, path, clientIP, userAgent string) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	c.Method = method
 	c.Path = path
 	c.ClientIP = clientIP
 	c.UserAgent = userAgent
-
-	// 添加到日志字段
-	c.AddLogField("method", method)
-	c.AddLogField("path", path)
-	c.AddLogField("client_ip", clientIP)
-	c.AddLogField("user_agent", userAgent)
+	c.logFields = append(c.logFields,
+		zap.String("method", method),
+		zap.String("path", path),
+		zap.String("client_ip", clientIP),
+		zap.String("user_agent", userAgent),
+	)
+	c.mu.Unlock()
 }
 
 // SetCustomField 设置自定义字段
 func (c *Context) SetCustomField(key string, value interface{}) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
 	c.CustomFields[key] = value
-	c.AddLogField(key, value)
+	c.logFields = append(c.logFields, zap.Any(key, value))
+	c.mu.Unlock()
 }
 
 // GetCustomField 获取自定义字段
 func (c *Context) GetCustomField(key string) (interface{}, bool) {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-
-	value, exists := c.CustomFields[key]
-	return value, exists
+	v, ok := c.CustomFields[key]
+	return v, ok
 }
 
 // SetLogger 设置日志记录器
-func (c *Context) SetLogger(logger *zap.Logger) {
+func (c *Context) SetLogger(l *zap.Logger) {
 	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	c.logger = logger
+	c.logger = l
+	c.mu.Unlock()
 }
 
 // GetLogger 获取日志记录器
 func (c *Context) GetLogger() *zap.Logger {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-
 	return c.logger
 }
 
 // LogInfo 记录信息日志
 func (c *Context) LogInfo(msg string, fields ...zap.Field) {
-	if c.logger != nil {
-		allFields := c.buildLogFields(fields...)
-		c.logger.Info(msg, allFields...)
+	if l := c.GetLogger(); l != nil {
+		l.Info(msg, c.buildLogFields(fields...)...)
 	}
 }
 
 // LogWarn 记录警告日志
 func (c *Context) LogWarn(msg string, fields ...zap.Field) {
-	if c.logger != nil {
-		allFields := c.buildLogFields(fields...)
-		c.logger.Warn(msg, allFields...)
+	if l := c.GetLogger(); l != nil {
+		l.Warn(msg, c.buildLogFields(fields...)...)
 	}
 }
 
 // LogError 记录错误日志
 func (c *Context) LogError(msg string, fields ...zap.Field) {
-	if c.logger != nil {
-		allFields := c.buildLogFields(fields...)
-		c.logger.Error(msg, allFields...)
+	if l := c.GetLogger(); l != nil {
+		l.Error(msg, c.buildLogFields(fields...)...)
 	}
 }
 
 // LogDebug 记录调试日志
 func (c *Context) LogDebug(msg string, fields ...zap.Field) {
-	if c.logger != nil {
-		allFields := c.buildLogFields(fields...)
-		c.logger.Debug(msg, allFields...)
+	if l := c.GetLogger(); l != nil {
+		l.Debug(msg, c.buildLogFields(fields...)...)
 	}
 }
 
@@ -225,12 +210,12 @@ func (c *Context) GetDuration() time.Duration {
 	return time.Since(c.StartTime)
 }
 
-// GetTraceID 获取追踪ID
+// GetTraceID 获取追踪 ID
 func (c *Context) GetTraceID() string {
 	return c.TraceID
 }
 
-// GetUserID 获取用户ID
+// GetUserID 获取用户 ID
 func (c *Context) GetUserID() string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -251,7 +236,7 @@ func (c *Context) GetUserRole() string {
 	return c.UserRole
 }
 
-// GetMethod 获取HTTP方法
+// GetMethod 获取 HTTP 方法
 func (c *Context) GetMethod() string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -265,7 +250,7 @@ func (c *Context) GetPath() string {
 	return c.Path
 }
 
-// GetClientIP 获取客户端IP
+// GetClientIP 获取客户端 IP
 func (c *Context) GetClientIP() string {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
@@ -279,78 +264,65 @@ func (c *Context) GetUserAgent() string {
 	return c.UserAgent
 }
 
-// GetCustomFields 获取所有自定义字段
+// GetCustomFields 获取所有自定义字段（副本）
 func (c *Context) GetCustomFields() map[string]interface{} {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-
-	// 返回副本以避免并发问题
-	result := make(map[string]interface{})
+	result := make(map[string]interface{}, len(c.CustomFields))
 	for k, v := range c.CustomFields {
 		result[k] = v
 	}
 	return result
 }
 
-// GetLogFields 获取所有日志字段
+// GetLogFields 获取所有日志字段（副本）
 func (c *Context) GetLogFields() []zap.Field {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-
-	// 返回副本以避免并发问题
 	result := make([]zap.Field, len(c.logFields))
 	copy(result, c.logFields)
 	return result
 }
 
-// AddLogField 添加日志字段（内部方法，需要加锁）
+// AddLogField 并发安全地追加日志字段
 func (c *Context) AddLogField(key string, value interface{}) {
+	c.mu.Lock()
 	c.logFields = append(c.logFields, zap.Any(key, value))
+	c.mu.Unlock()
 }
 
-// buildLogFields 构建日志字段（内部方法）
-func (c *Context) buildLogFields(fields ...zap.Field) []zap.Field {
+func (c *Context) buildLogFields(extra ...zap.Field) []zap.Field {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	// 基础字段
-	baseFields := []zap.Field{
+	base := []zap.Field{
 		zap.String("trace_id", c.TraceID),
 		zap.Duration("duration", time.Since(c.StartTime)),
 	}
-
-	// 合并所有字段
-	allFields := make([]zap.Field, 0, len(baseFields)+len(c.logFields)+len(fields))
-	allFields = append(allFields, baseFields...)
-	allFields = append(allFields, c.logFields...)
-	allFields = append(allFields, fields...)
-
-	return allFields
+	all := make([]zap.Field, 0, len(base)+len(c.logFields)+len(extra))
+	all = append(all, base...)
+	all = append(all, c.logFields...)
+	all = append(all, extra...)
+	return all
 }
 
-// Deadline 实现context.Context接口
-func (c *Context) Deadline() (deadline time.Time, ok bool) {
-	return c.ctx.Deadline()
-}
+// ----- context.Context 接口实现 -----
 
-// Done 实现context.Context接口
-func (c *Context) Done() <-chan struct{} {
-	return c.ctx.Done()
-}
-
-// Err 实现context.Context接口
-func (c *Context) Err() error {
-	return c.ctx.Err()
-}
-
-// Value 实现context.Context接口
+func (c *Context) Deadline() (time.Time, bool)    { return c.ctx.Deadline() }
+func (c *Context) Done() <-chan struct{}          { return c.ctx.Done() }
+func (c *Context) Err() error                     { return c.ctx.Err() }
 func (c *Context) Value(key interface{}) interface{} {
+	if key == CtxKey {
+		return c
+	}
 	return c.ctx.Value(key)
 }
 
 // Cancel 取消上下文
 func (c *Context) Cancel() {
-	c.cancel()
+	if c.cancel != nil {
+		c.cancel()
+	}
 }
 
 // IsCancelled 检查上下文是否已取消
@@ -363,19 +335,17 @@ func (c *Context) IsCancelled() bool {
 	}
 }
 
-// Clone 克隆Context（创建新的实例但保留基础信息）
+// Clone 克隆 Context（保留基础信息，新开 cancel 链路）
 func (c *Context) Clone() *Context {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	// 创建新的context
-	ctx, cancel := context.WithCancel(context.Background())
-
+	ctx, cancel := stdctx.WithCancel(stdctx.Background())
 	clone := &Context{
 		ctx:          ctx,
 		cancel:       cancel,
-		TraceID:      c.TraceID,  // 保持相同的追踪ID
-		StartTime:    time.Now(), // 新的开始时间
+		TraceID:      c.TraceID,
+		StartTime:    time.Now(),
 		UserID:       c.UserID,
 		Username:     c.Username,
 		UserRole:     c.UserRole,
@@ -383,19 +353,13 @@ func (c *Context) Clone() *Context {
 		Path:         c.Path,
 		ClientIP:     c.ClientIP,
 		UserAgent:    c.UserAgent,
-		CustomFields: make(map[string]interface{}),
+		CustomFields: make(map[string]interface{}, len(c.CustomFields)),
 		logger:       c.logger,
-		logFields:    make([]zap.Field, 0),
 	}
-
-	// 复制自定义字段
 	for k, v := range c.CustomFields {
 		clone.CustomFields[k] = v
 	}
-
-	// 复制日志字段
 	clone.logFields = make([]zap.Field, len(c.logFields))
 	copy(clone.logFields, c.logFields)
-
 	return clone
 }

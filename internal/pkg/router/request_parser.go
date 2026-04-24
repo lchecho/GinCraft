@@ -5,8 +5,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/liuchen/gin-craft/internal/constant"
-	"github.com/liuchen/gin-craft/pkg/errors"
-	"github.com/liuchen/gin-craft/pkg/response"
+	"github.com/liuchen/gin-craft/internal/pkg/errors"
+	"github.com/liuchen/gin-craft/internal/pkg/response"
 )
 
 // ParseRequest 解析请求参数（泛型版本）

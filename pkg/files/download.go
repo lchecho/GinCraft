@@ -77,14 +77,17 @@ func downloadFile(url string, dir string, client *http.Client) (string, error) {
 	if err != nil {
 		return "", fmt.Errorf("下载文件, 解析URL失败: %v", err)
 	}
-	// 构建完整的保存路径
-	var ext string
+	// 构建完整的保存路径：无扩展名时不追加 "." 尾缀
+	ext := ""
 	fileName := filepath.Base(u.Path)
-	ss := strings.Split(fileName, ".")
-	if len(ss) > 1 {
-		ext = ss[len(ss)-1]
+	if dot := strings.LastIndex(fileName, "."); dot > -1 && dot < len(fileName)-1 {
+		ext = fileName[dot+1:]
 	}
-	filePath := fmt.Sprintf("%s/%s.%s", dir, uuid.New().String(), ext)
+	name := uuid.New().String()
+	if ext != "" {
+		name += "." + ext
+	}
+	filePath := filepath.Join(dir, name)
 
 	// 创建本地文件
 	file, err := os.Create(filePath)

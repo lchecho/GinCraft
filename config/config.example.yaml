@@ -4,6 +4,7 @@ app:
   port: 8080
   read_timeout: 60
   write_timeout: 60
+  api_key: ""  # 服务端 API Key，供 /api/v1/api/* 路由使用
 
 log:
   level: debug  # debug, info, warn, error, fatal, panic
@@ -29,3 +30,15 @@ redis:
   password: ""
   db: 0
   pool_size: 10
+  min_idle_conns: 5
+  max_retries: 3
+  dial_timeout: 5    # seconds
+  read_timeout: 3
+  write_timeout: 3
+
+cors:
+  allow_origins: []          # 空或包含 "*" 表示允许所有（allow_credentials=true 时必须显式列举）
+  allow_methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+  allow_headers: ["Content-Type", "Authorization", "X-Requested-With", "X-API-Key", "X-Trace-ID"]
+  allow_credentials: false
+  max_age: 600

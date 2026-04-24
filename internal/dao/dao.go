@@ -1,75 +1,76 @@
 package dao
 
 import (
+	"strings"
+
 	"github.com/liuchen/gin-craft/internal/dto"
-	"github.com/liuchen/gin-craft/pkg/database"
+	pkgdb "github.com/liuchen/gin-craft/pkg/database"
 	"github.com/pkg/errors"
 	"gorm.io/gorm"
-	"strings"
-	"time"
 )
 
-func paginate(pagination *dto.Pagination) func(db *gorm.DB) *gorm.DB {
+const (
+	defaultPageSize = 10
+	maxPageSize     = 100
+)
+
+// paginate 分页 scope，不回写 req。
+func paginate(p *dto.Pagination) func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
-		if pagination.NowPage >= 0 {
-			if pagination.NowPage < 1 {
-				pagination.NowPage = 1
-			}
-
-			if pagination.PerPage < 20 {
-				pagination.PerPage = 20
-			}
-			offset := (pagination.NowPage - 1) * pagination.PerPage
-			return db.Offset(offset).Limit(pagination.PerPage)
+		page := p.NowPage
+		if page <= 0 {
+			page = 1
 		}
-
-		return db
+		size := p.PerPage
+		if size <= 0 {
+			size = defaultPageSize
+		}
+		if size > maxPageSize {
+			size = maxPageSize
+		}
+		return db.Offset((page - 1) * size).Limit(size)
 	}
 }
 
-func order() func(db *gorm.DB) *gorm.DB {
+// defaultOrder 默认按 id 倒序
+func defaultOrder() func(db *gorm.DB) *gorm.DB {
 	return func(db *gorm.DB) *gorm.DB {
 		return db.Order("id DESC")
 	}
 }
 
-func FirstByCondition(db database.Database, m interface{}, condition map[string]interface{}) error {
-	return db.GetDB().Where(condition).Order(order()).Limit(1).Find(m).Error
+// FirstByCondition 按条件查一条；找不到返回 gorm.ErrRecordNotFound
+func FirstByCondition(db pkgdb.Database, m interface{}, cond map[string]interface{}) error {
+	return db.GetDB().Where(cond).Scopes(defaultOrder()).First(m).Error
 }
 
-func FindAllByCondition(db database.Database, data interface{}, condition map[string]interface{}, orders ...string) error {
-	cur := db.GetDB().Where(condition)
+// FindAllByCondition 按条件查多条；orders 为空则默认 id DESC
+func FindAllByCondition(db pkgdb.Database, data interface{}, cond map[string]interface{}, orders ...string) error {
+	cur := db.GetDB().Where(cond)
 	if len(orders) > 0 {
-		cur.Order(strings.Join(orders, ","))
+		cur = cur.Order(strings.Join(orders, ","))
 	} else {
-		cur.Scopes(order())
+		cur = cur.Scopes(defaultOrder())
 	}
 	return errors.WithStack(cur.Find(data).Error)
 }
 
-func SaveModel(db database.Database, m interface{}) error {
+// SaveModel 保存模型（存在则更新，不存在则创建）
+func SaveModel(db pkgdb.Database, m interface{}) error {
 	return db.GetDB().Save(m).Error
 }
 
-func CreateModel(db database.Database, m interface{}) error {
+// CreateModel 创建模型
+func CreateModel(db pkgdb.Database, m interface{}) error {
 	return db.GetDB().Create(m).Error
 }
 
-func StartTransaction(db database.Database, f func(tx *gorm.DB) error) error {
-	return db.GetDB().Transaction(func(tx *gorm.DB) error {
-		return f(tx)
-	})
+// StartTransaction 开启事务
+func StartTransaction(db pkgdb.Database, f func(tx *gorm.DB) error) error {
+	return db.GetDB().Transaction(f)
 }
 
-func BatchCreateModel(db database.Database, m interface{}, batchSize int) error {
+// BatchCreateModel 批量创建
+func BatchCreateModel(db pkgdb.Database, m interface{}, batchSize int) error {
 	return db.GetDB().CreateInBatches(m, batchSize).Error
-}
-
-func DeleteModelById(db database.Database, m interface{}, condition map[string]interface{}, operatorId uint) error {
-	return db.GetDB().Model(m).
-		Where(condition).
-		Updates(map[string]interface{}{
-			"deleted_at": time.Now(),
-			"updated_by": operatorId,
-		}).Error
 }
